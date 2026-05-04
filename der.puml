@@ -57,12 +57,15 @@ entity "Venta" {
     * Agente_Legajo : bigint <<FK>>
     * Venta_Fecha_Venta: smalldate
     * Venta_Canal_Venta : String <<FK>>
+    * Propuesta_Nro_Propuesta : bigint <<FK>>
     * Venta_Subtotal: int
     * Venta_Descuento : smallint
     * Venta_Importe_Total : int
     * Venta_Medio_Pago: varchar(10)
     * Venta_Encuesta : String <<FK>>
+    * Venta_Propuesta: bigint <<FK>>
 }
+
 
 entity "Hospedaje"{
     * Hospedaje_Codigo : nvarchar(255) <<PK>>
@@ -109,11 +112,11 @@ entity Detalle_Venta_Excursion {
     * Excursion_Codigo: nvarchar(255) <<PK>>
     * Venta_Nro_Venta : bigint <<PK>>
     --
-    Detalle_Venta_Excursion_Fecha_Reserva date
-    Detalle_Venta_Excursion_Cant int
-    Detalle_Venta_Excursion_Precio_Unitario decimal(18, 2)
-    Detalle_Venta_Excursion_Subtotal decimal(18, 2)
-    Detalle_Venta_Excursion_Cod_Reserva nvarchar(255)
+    *Detalle_Venta_Excursion_Fecha_Reserva date
+    *Detalle_Venta_Excursion_Cant int
+    *Detalle_Venta_Excursion_Precio_Unitario decimal(18, 2)
+    *Detalle_Venta_Excursion_Subtotal decimal(18, 2)
+    *Detalle_Venta_Excursion_Cod_Reserva nvarchar(255)
 }
 
 entity "Vuelo"{
@@ -142,13 +145,68 @@ entity Detalle_Venta_Vuelo{
 	* Detalle_Venta_Vuelo_Subtotal : decimal(18, 2)
 }
 
-
-
-entity "Servicios"{
+entity SolicitudCotizacion {
+    * Solicitud_Nro_Solicitud bigint <<PK>>
+     --
+    * Solicitud_cod_cliente : bignit <<FK>>
+    * Solicitud_Ciudad : nvarchar(255) <<FK>>
+    * Solicitud_Fecha_Solicitud : date
+    * Solicitud_Fecha_Inicio_Tentativa : date
+    * Solicitud_Fecha_Fin_Tentativa : date
+    * Solicitud_Cant_Pax : int
+    * Solicitud_Observaciones : nvarchar(max)
+    * Solicitud_Presupuesto_Estimado : decimal(18, 2)
+    * Solicitud_Agente : bigint <<FK>>
 
 }
 
+entity  DetalleCiudad {
+    * Detalle_Solicitud_cod_Ciudad : nvarchar(255) <<PK>>
+     --
+    * Detalle_Solicitud_Ciudad : nvarchar(255)
+    * Detalle_Solicitud_Cant_Dias_Aprox : int
+    * Detalle_Solicitud_Observaciones : nvarchar(max)
+}
 
+entity Propuesta {
+    * Propuesta_Nro_Propuesta : bigint <<PK>>
+     --
+    * Propuesta_Solicitud : bigint <<FK>>
+    * Propuesta_Agente : bigint <<FK>>
+    * Propuesta_Fecha_Emision : date
+    * Propuesta_Vigencia_Hasta : date
+    * Propuesta_Fecha_Desde : date
+    * Propuesta_Fecha_Hasta : date
+    * Propuesta_Detalle_Propuesta_Vuelo : bigint <<FK>>
+    * Propuesta_Detalle_Propuesta_Hospedaje : bigint <<FK>>
+    * Propuesta_Subtotal : decimal(18, 2)
+    * Propuesta_Descuento : decimal(18, 2)
+    * Propuesta_Importe_Total : decimal(18, 2)
+    * Propuesta_Estado : nvarchar(255)
+
+}
+
+entity DetallePropuestaVuelo {
+     * Detalle_Propuesta_Cod : bigint <<PK>>
+      --
+     * Detalle_Propuesta_Vuelo_Cod_Vuelo: bigint <<FK>>
+     * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
+     * Detalle_Propuesta_Vuelo_Cant_Pasajes : int
+     * Detalle_Propuesta_Vuelo_Precio : decimal(18, 2)
+     * Detalle_Propuesta_Vuelo_Subtotal decimal(18, 2)
+}
+
+entity DetallePropuestaHospedaje{
+     * Detalle_Propuesta_Hospedaje_Cod : nvarchar(255) <<PK>>
+     --
+     * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
+     * Detalle_Propuesta_Hospedaje_Cod_Hospedaje: nvarchar(255) <<FK>>
+     * Detalle_Propuesta_Hospedaje_Fecha_Desde date
+     * Detalle_Propuesta_Hospedaje_Fecha_Hasta date
+     * Detalle_Propuesta_Hospedaje_Cant int
+     * Detalle_Propuesta_Hospedaje_Precio decimal(18, 2)
+     * Detalle_Propuesta_Hospedaje_Subtotal decimal(18, 2)
+}
 
 entity "Aerolinea" {
     * Aerolinea_Codigo : nvarchar(255) <<PK>>
@@ -194,8 +252,6 @@ entity "Aspecto" {
 Agente }|--o| "Venta"
 Agencia ||--o{ "Venta"
 Agente }o--|| "Agencia"
-Venta }o--|| "Canal"
-Agencia ||--|| Servicios
 Cliente ||--o{Venta
 Vuelo }o--|| Aerolinea
 Aeropuerto ||--o{ Vuelo : "Salida"
@@ -218,7 +274,20 @@ CalificacionPorEncuesta}|--||Encuesta
 
 Encuesta|o--||Venta
 
+Cliente||--o{SolicitudCotizacion
+SolicitudCotizacion}o--||Agente
 
+SolicitudCotizacion|o--|{DetalleCiudad
+SolicitudCotizacion||--o{Propuesta
+
+Propuesta|o--||Agente
+Propuesta||--o{DetallePropuestaVuelo
+Propuesta||--o{DetallePropuestaHospedaje
+
+DetallePropuestaVuelo|o--||Vuelo
+DetallePropuestaHospedaje|o--||Hospedaje
+
+Propuesta}o--o|Venta
 
 
 
