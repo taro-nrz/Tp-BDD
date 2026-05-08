@@ -160,13 +160,14 @@ entity SolicitudCotizacion {
 
 }
 
-entity  DetalleCiudad {
+entity DetalleCiudad{
     * Detalle_Solicitud_cod_Ciudad : nvarchar(255) <<PK>>
      --
-    * Detalle_Solicitud_Ciudad : nvarchar(255)
     * Detalle_Solicitud_Cant_Dias_Aprox : int
+    * Detalle_Solicitud_Ciudad : nvarchar(255)
     * Detalle_Solicitud_Observaciones : nvarchar(max)
 }
+
 
 entity Propuesta {
     * Propuesta_Nro_Propuesta : bigint <<PK>>
@@ -233,16 +234,16 @@ entity "Encuesta" {
 }
 
 entity CalificacionPorEncuesta {
-    * Encuesta_Codigo String <<FK>>
+    * Encuesta_Codigo : String <<FK>>
     * Aspecto-Codigo: bigint<<FK>>
     --
-    * calificacion
+    * Aspecto_calificacion : int
 }
 
 entity "Aspecto" {
-     * Aspecto_Codigo : ... <<PK>>
+     * Aspecto_Codigo : Aspecto_Cod <<PK>>
      --
-     * descripcion: nvarchar (255)
+     * descripcion : nvarchar (255)
 }
 
 
