@@ -154,7 +154,6 @@ entity SolicitudCotizacion {
     * Solicitud_Fecha_Inicio_Tentativa : date
     * Solicitud_Fecha_Fin_Tentativa : date
     * Solicitud_Cant_Pax : int
-    * Solicitud_Observaciones : nvarchar(max)
     * Solicitud_Presupuesto_Estimado : decimal(18, 2)
     * Solicitud_Agente : bigint <<FK>>
 
@@ -166,6 +165,7 @@ entity DetalleCiudad{
     * Detalle_Solicitud_Cant_Dias_Aprox : int
     * Detalle_Solicitud_Ciudad : nvarchar(255)
     * Detalle_Solicitud_Observaciones : nvarchar(max)
+    * Detalle_Nro_Solicitud : bigint <<FK>>
 }
 
 
