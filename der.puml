@@ -55,20 +55,19 @@ entity "Venta" {
     * Agencia_Nro_Agencia : bigint <<FK>>
     * Nro_cliente : bigint <<FK>>
     * Agente_Legajo : bigint <<FK>>
-    * Venta_Fecha_Venta: smalldate
+    * Venta_Fecha_Venta: date
     * Venta_Canal_Venta : String <<FK>>
     * Propuesta_Nro_Propuesta : bigint <<FK>>
-    * Venta_Subtotal: int
-    * Venta_Descuento : smallint
-    * Venta_Importe_Total : int
-    * Venta_Medio_Pago: varchar(10)
+    * Venta_Subtotal: decimal(18, 2)
+    * Venta_Descuento : decimal(18, 2)
+    * Venta_Importe_Total : decimal(18, 2)
+    * Venta_Medio_Pago: nvarchar(255)
 }
 
 
 entity "Hospedaje"{
     * Hospedaje_Codigo : nvarchar(255) <<PK>>
     --
-    * Habitacion_Codigo : nvarchar(50) <<FK>>
     * Hospedaje_Ciudad : nvarchar(255)
     * Hospedaje_Pais : nvarchar(255)
     * Hospedaje_Nombre : nvarchar(255)
@@ -78,26 +77,25 @@ entity "Hospedaje"{
     * Hospedaje_Check_Out : nvarchar(50)
 }
 entity Detalle_Venta_Hospedaje {
-    * Detalle_Venta_Hospedaje : (255) <<PK>>
+    * Detalle_Venta_Hospedaje : int <<PK>>
     * Venta_Nro_Venta : bigint <<PK>>
     --
-    * Detalle_Venta_Hospedaje_Precio_Unitario decimal(18, 2)
-    * Detalle_Venta_Hospedaje_Subtotal decimal(18, 2)
-    * Detalle_Venta_Hospedaje_Cod_Reserva nvarchar(255)
+    * Detalle_Venta_Hospedaje_Precio_Unitario: decimal(18, 2)
+    * Detalle_Venta_Hospedaje_Subtotal: decimal(18, 2)
+    * Detalle_Venta_Hospedaje_Cod_Reserva: nvarchar(255)
 }
 
 entity "Habitacion" {
     * Habitacion_Codigo : nvarchar(50) <<PK>>
     --
-    * Hospedaje_Codigo : nvarhcar(255) <<FK>>
-    * Habitacion_Nombre nvarchar(255)
-    * Habitacion_Descripcion nvarchar(max)
-    * Habitacion_Precio_Noche decimal(18, 2)
+    * Hospedaje_Codigo : nvarchar(255) <<FK>>
+    * Habitacion_Nombre: nvarchar(255)
+    * Habitacion_Descripcion: nvarchar(max)
+    * Habitacion_Precio_Noche: decimal(18, 2)
 }
 
 entity "Excursion"{
     * Excursion_Codigo : nvarchar(255) <<PK>>
-    * Venta_Nro_Venta : bigint <<PK>>
     --
     * Excursion_Nombre : nvarchar(255)
     * Excursion_Descripcion : nvarchar(max)
@@ -110,17 +108,17 @@ entity Detalle_Venta_Excursion {
     * Excursion_Codigo: nvarchar(255) <<PK>>
     * Venta_Nro_Venta : bigint <<PK>>
     --
-    *Detalle_Venta_Excursion_Fecha_Reserva date
-    *Detalle_Venta_Excursion_Cant int
-    *Detalle_Venta_Excursion_Precio_Unitario decimal(18, 2)
-    *Detalle_Venta_Excursion_Subtotal decimal(18, 2)
-    *Detalle_Venta_Excursion_Cod_Reserva nvarchar(255)
+    *Detalle_Venta_Excursion_Fecha_Reserva: date
+    *Detalle_Venta_Excursion_Cant: int
+    *Detalle_Venta_Excursion_Precio_Unitario: decimal(18, 2)
+    *Detalle_Venta_Excursion_Subtotal: decimal(18, 2)
+    *Detalle_Venta_Excursion_Cod_Reserva: nvarchar(255)
 }
 
 entity "Vuelo"{
     * Vuelo_Codigo: bigint <<PK>>
     --
-    * Aeronlinea_Codigo : nvarchar(255) <<FK>>
+    * Aerolinea_Codigo : nvarchar(255) <<FK>>
     * Aeropuerto_Salida_Codigo : nvarchar(10) <<FK>>
     * Aeropuerto_Llegada_Codigo : nvarchar(10) <<FK>>
     * Vuelo_Fecha_Salida : date
@@ -147,7 +145,6 @@ entity SolicitudCotizacion {
     * Solicitud_Nro_Solicitud bigint <<PK>>
      --
     * Solicitud_cod_cliente : bignit <<FK>>
-    * Solicitud_Ciudad : nvarchar(255) <<FK>>
     * Solicitud_Fecha_Solicitud : date
     * Solicitud_Fecha_Inicio_Tentativa : date
     * Solicitud_Fecha_Fin_Tentativa : date
@@ -198,11 +195,11 @@ entity DetallePropuestaHospedaje{
      --
      * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
      * Detalle_Propuesta_Hospedaje_Cod_Hospedaje: nvarchar(255) <<FK>>
-     * Detalle_Propuesta_Hospedaje_Fecha_Desde date
-     * Detalle_Propuesta_Hospedaje_Fecha_Hasta date
-     * Detalle_Propuesta_Hospedaje_Cant int
-     * Detalle_Propuesta_Hospedaje_Precio decimal(18, 2)
-     * Detalle_Propuesta_Hospedaje_Subtotal decimal(18, 2)
+     * Detalle_Propuesta_Hospedaje_Fecha_Desde: date
+     * Detalle_Propuesta_Hospedaje_Fecha_Hasta: date
+     * Detalle_Propuesta_Hospedaje_Cant: int
+     * Detalle_Propuesta_Hospedaje_Precio: decimal(18, 2)
+     * Detalle_Propuesta_Hospedaje_Subtotal: decimal(18, 2)
 }
 
 entity "Aerolinea" {
@@ -210,36 +207,36 @@ entity "Aerolinea" {
     --
     * Aerolinea_Nombre : nvarchar(255)
     * Aerolinea_Pais : nvarchar(255)
-    * Arerolinea_Alianza : nvarchar(255)
+    * Aerolinea_Alianza : nvarchar(255)
 }
 
 entity "Aeropuerto" {
-    * Areopuerto_codigo : char(3) <<PK>>
+    * Areopuerto_codigo : nvarchar(10) <<PK>>
     --
-    * Aeropuerto_Descripcion : String
-    * Aeropuerto_Ciudad : String
-    * Aeropuerto_Pais : String
+    * Aeropuerto_Descripcion : nvarchar(200)
+    * Aeropuerto_Ciudad : nvarchar(200)
+    * Aeropuerto_Pais : nvarchar(200)
 }
 
 entity "Encuesta" {
-    * Encuesta_Codigo : String <<PK>>
+    * Encuesta_Codigo : bigint <<PK>>
     --
     * cliente_cod: bigint <<FK>>
     * Agente_Legajo: bigint <<FK>>
     * Venta_Nro_Venta : bigint <<FK>>
     * Propuesta_Nro_Propuesta : bigint <<FK>>
-    * comentario : nvarchar(255)
+    * comentario : nvarchar(max)
 }
 
 entity CalificacionPorEncuesta {
-    * Encuesta_Codigo : String <<FK>>
-    * Aspecto-Codigo: bigint<<FK>>
+    * Encuesta_Codigo : bigint <<FK>>
+    * Aspecto_Codigo: bigint<<FK>>
     --
     * Aspecto_calificacion : int
 }
 
 entity "Aspecto" {
-     * Aspecto_Codigo : Aspecto_Cod <<PK>>
+     * Aspecto_Codigo : bigint <<PK>>
      --
      * descripcion : nvarchar (255)
 }
