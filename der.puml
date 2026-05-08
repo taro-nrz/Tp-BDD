@@ -62,7 +62,6 @@ entity "Venta" {
     * Venta_Descuento : smallint
     * Venta_Importe_Total : int
     * Venta_Medio_Pago: varchar(10)
-    * Venta_Propuesta: bigint <<FK>>
 }
 
 
