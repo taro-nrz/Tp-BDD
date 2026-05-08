@@ -178,8 +178,6 @@ entity Propuesta {
     * Propuesta_Vigencia_Hasta : date
     * Propuesta_Fecha_Desde : date
     * Propuesta_Fecha_Hasta : date
-    * Propuesta_Detalle_Propuesta_Vuelo : bigint <<FK>>
-    * Propuesta_Detalle_Propuesta_Hospedaje : bigint <<FK>>
     * Propuesta_Subtotal : decimal(18, 2)
     * Propuesta_Descuento : decimal(18, 2)
     * Propuesta_Importe_Total : decimal(18, 2)
