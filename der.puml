@@ -5,6 +5,7 @@
 ' Configuración para que las líneas sean rectas
 skinparam Linetype ortho
 
+
 entity "Agencia" {
     * Agencia_Nro_Agencia: bigint <<PK>>
     --
@@ -142,31 +143,32 @@ entity Detalle_Venta_Vuelo{
 }
 
 entity SolicitudCotizacion {
-    * Solicitud_Nro_Solicitud bigint <<PK>>
-     --
-    * Solicitud_cod_cliente : bignit <<FK>>
+    * Solicitud_Nro_Solicitud: bigint <<PK>>
+    --
+    * Solicitud_cod_cliente : bigint <<FK>>
+    * Solicitud_Agente : bigint <<FK>>
     * Solicitud_Fecha_Solicitud : date
     * Solicitud_Fecha_Inicio_Tentativa : date
     * Solicitud_Fecha_Fin_Tentativa : date
     * Solicitud_Cant_Pax : int
     * Solicitud_Presupuesto_Estimado : decimal(18, 2)
-    * Solicitud_Agente : bigint <<FK>>
 
 }
 
-entity DetalleCiudad{
-    * Detalle_Solicitud_cod_Ciudad : nvarchar(255) <<PK>>
-     --
-    * Detalle_Solicitud_Cant_Dias_Aprox : int
-    * Detalle_Solicitud_Ciudad : nvarchar(255)
-    * Detalle_Solicitud_Observaciones : nvarchar(max)
+entity DetalleCiudad {
+    * Detalle_Solicitud_cod_Ciudad : nvarchar (255) <<PK>>
+    --
     * Detalle_Nro_Solicitud : bigint <<FK>>
+    * Detalle_Solicitud_Cant_Dias_Aprox : int
+    * Detalle_Solicitud_Ciudad : nvarchar (255)
+    * Detalle_Solicitud_Observaciones : nvarchar (max)
+
 }
 
 
 entity Propuesta {
     * Propuesta_Nro_Propuesta : bigint <<PK>>
-     --
+    --
     * Propuesta_Solicitud : bigint <<FK>>
     * Propuesta_Agente : bigint <<FK>>
     * Propuesta_Fecha_Emision : date
@@ -176,13 +178,13 @@ entity Propuesta {
     * Propuesta_Subtotal : decimal(18, 2)
     * Propuesta_Descuento : decimal(18, 2)
     * Propuesta_Importe_Total : decimal(18, 2)
-    * Propuesta_Estado : nvarchar(255)
+    * Propuesta_Estado : nvarchar (255)
 
 }
 
 entity DetallePropuestaVuelo {
      * Detalle_Propuesta_Cod : bigint <<PK>>
-      --
+     --
      * Detalle_Propuesta_Vuelo_Cod_Vuelo: bigint <<FK>>
      * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
      * Detalle_Propuesta_Vuelo_Cant_Pasajes : int
