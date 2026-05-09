@@ -78,8 +78,8 @@ entity "Hospedaje"{
     * Hospedaje_Check_Out : nvarchar(50)
 }
 entity Detalle_Venta_Hospedaje {
-    * Detalle_Venta_Hospedaje : int <<PK>>
-    * Venta_Nro_Venta : bigint <<PK>>
+    * Detalle_Venta_Hospedaje : int <<FK>>
+    * Venta_Nro_Venta : bigint <<FK>>
     --
     * Detalle_Venta_Hospedaje_Precio_Unitario: decimal(18, 2)
     * Detalle_Venta_Hospedaje_Subtotal: decimal(18, 2)
@@ -106,8 +106,8 @@ entity "Excursion"{
 }
 
 entity Detalle_Venta_Excursion {
-    * Excursion_Codigo: nvarchar(255) <<PK>>
-    * Venta_Nro_Venta : bigint <<PK>>
+    * Excursion_Codigo: nvarchar(255) <<FK>>
+    * Venta_Nro_Venta : bigint <<FK>>
     --
     *Detalle_Venta_Excursion_Fecha_Reserva: date
     *Detalle_Venta_Excursion_Cant: int
@@ -134,8 +134,8 @@ entity "Vuelo"{
 }
 
 entity Detalle_Venta_Vuelo{
-	* Detalle_Venta_Vuelo_Cod_Reserva : nvarchar(255) <<PK>>
-	* Venta_Nro_Venta : bigint <<PK>>
+	* Detalle_Venta_Vuelo_Cod_Reserva : nvarchar(255) <<FK>>
+	* Venta_Nro_Venta : bigint <<FK>>
 	--
     * Detalle_Venta_Vuelo_Cantidad_Pasajes : int
 	* Detalle_Venta_Vuelo_Precio_Unitario : decimal(18, 2)
@@ -243,6 +243,18 @@ entity "Aspecto" {
      * descripcion : nvarchar (255)
 }
 
+entity "Medio_Pago" {
+    * Medio_Codigo : bigint <<PK>>
+    --
+    * Medio_Detalle : nvarchar(255)
+}
+
+entity "Canal_Venta" {
+    * Canal_Codigo : bigint <<PK>>
+    --
+    * Canal_Detalle : nvarchar(255)
+}
+
 
 
 
@@ -287,7 +299,8 @@ DetallePropuestaHospedaje|o--||Hospedaje
 
 Propuesta}o--o|Venta
 
-
+Canal_Venta ||--o{ Venta
+Medio_Pago ||--o{ Venta
 
 
 @enduml
