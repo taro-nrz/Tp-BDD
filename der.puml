@@ -62,13 +62,13 @@ entity "Venta" {
     * Agencia_Nro_Agencia : bigint <<FK>>
     * Nro_cliente : bigint <<FK>>
     * Agente_Legajo : bigint <<FK>>
-    * Venta_Fecha_Venta: date
-    * Venta_Canal_Venta : String <<FK>>
+    * Venta_Canal_Venta : bigint <<FK>>
+    * Venta_Medio_Pago: bigint <<FK>>
     * Propuesta_Nro_Propuesta : bigint <<FK>>
+    * Venta_Fecha_Venta: date
     * Venta_Subtotal: decimal(18, 2)
     * Venta_Descuento : decimal(18, 2)
     * Venta_Importe_Total : decimal(18, 2)
-    * Venta_Medio_Pago: nvarchar(255)
 }
 
 
