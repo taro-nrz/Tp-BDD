@@ -177,6 +177,7 @@ entity Propuesta {
     --
     * Propuesta_Solicitud : bigint <<FK>>
     * Propuesta_Agente : bigint <<FK>>
+    * Propuesta_Estado_Cod : bigint <<FK>> 
     * Propuesta_Fecha_Emision : date
     * Propuesta_Vigencia_Hasta : date
     * Propuesta_Fecha_Desde : date
@@ -184,8 +185,13 @@ entity Propuesta {
     * Propuesta_Subtotal : decimal(18, 2)
     * Propuesta_Descuento : decimal(18, 2)
     * Propuesta_Importe_Total : decimal(18, 2)
-    * Propuesta_Estado : nvarchar (255)
 
+}
+
+entity Estado {
+    * Estado_cod bigint <<PK>>
+    --
+    * Estado_Nombre: nvarchar(255)
 }
 
 entity DetallePropuestaVuelo {
@@ -312,11 +318,12 @@ SolicitudCotizacion||--o{Propuesta
 Propuesta|o--||Agente
 Propuesta||--o{DetallePropuestaVuelo
 Propuesta||--o{DetallePropuestaHospedaje
+Propuesta}o--o|Venta
+Propuesta}|--||Estado
 
 DetallePropuestaVuelo|o--||Vuelo
 DetallePropuestaHospedaje|o--||Hospedaje
 
-Propuesta}o--o|Venta
 
 Canal_Venta ||--o{ Venta
 Medio_Pago ||--o{ Venta
