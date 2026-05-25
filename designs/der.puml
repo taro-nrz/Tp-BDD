@@ -261,7 +261,7 @@ entity CalificacionPorEncuesta {
 entity "Aspecto" {
      * Aspecto_Codigo : bigint <<PK>>
     --
-     * descripcion : nvarchar (255)
+     * Aspecto_descripcion : nvarchar (255)
 }
 
 entity "Medio_Pago" {
