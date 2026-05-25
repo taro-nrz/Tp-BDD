@@ -9,7 +9,7 @@ skinparam Linetype ortho
 entity "Agencia" {
     * Agencia_Nro_Agencia: bigint <<PK>>
     --
-    * ubicacion_cod: bigint <<FK>>
+    * Localidad_cod: bigint <<FK>>
     * Agencia_direccion: nvarchar (255)
     * Agencia_Telefono: nvarchar (255)
     * Agencia_Mail: nvarchar (255)
@@ -19,7 +19,7 @@ entity "Agencia" {
 entity "Agente" {
     * Agente_Legajo: bigint<<PK>>
     --
-    * Ubicacion : bigint <<FK>>
+    * Localidad_cod: bigint <<FK>>
 	* Agente_Nombre nvarchar(255)
 	* Agente_Apellido nvarchar(255)
 	* Agente_Dni: nvarchar(255)
@@ -32,7 +32,7 @@ entity "Agente" {
 entity Cliente {
     * cliente_cod: bigint <<PK>>
     --
-    * Ubicacion_cod: bigint <<FK>>
+    * Localidad_cod: bigint <<FK>>
     * Cliente_Nombre: nvarchar (255)
 	* Cliente_Apellido: nvarchar (255)
 	* Cliente_Dni: nvarchar(255)
@@ -43,11 +43,17 @@ entity Cliente {
 
 }
 
-entity "Ubicacion" {
-    * Ubicacion_cod: bigint <<PK>>
+entity "Provincia" {
+    * Provincia_cod: bigint <<PK>>
     --
-    * Ubicacion_Localidad: nvarchar (255)
-    * Ubicacion_Provincia: nvarchar (255)
+    * Provincia_Nombre: nvarchar (255)
+}
+
+entity "Localidad" {
+    * Localidad_cod: bigint <<PK>>
+    --
+    * Provincia_cod: bigint <<FK>>
+    * Localidad_Nombre: nvarchar (255)
 }
 
 entity "Venta" {
@@ -184,7 +190,7 @@ entity Propuesta {
 
 entity DetallePropuestaVuelo {
      * Detalle_Propuesta_Cod : bigint <<PK>>
-     --
+    --
      * Detalle_Propuesta_Vuelo_Cod_Vuelo: bigint <<FK>>
      * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
      * Detalle_Propuesta_Vuelo_Cant_Pasajes : int
@@ -194,7 +200,7 @@ entity DetallePropuestaVuelo {
 
 entity DetallePropuestaHospedaje{
      * Detalle_Propuesta_Hospedaje_Cod : nvarchar(255) <<PK>>
-     --
+    --
      * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
      * Detalle_Propuesta_Hospedaje_Cod_Hospedaje: nvarchar(255) <<FK>>
      * Detalle_Propuesta_Hospedaje_Fecha_Desde: date
@@ -239,7 +245,7 @@ entity CalificacionPorEncuesta {
 
 entity "Aspecto" {
      * Aspecto_Codigo : bigint <<PK>>
-     --
+    --
      * descripcion : nvarchar (255)
 }
 
@@ -276,8 +282,10 @@ Excursion |o--|{Detalle_Venta_Excursion
 Detalle_Venta_Excursion }|--||Venta
 
 
-Ubicacion ||--o{ Agencia
-Ubicacion ||--o{ Agente
+Provincia ||--|{ Localidad
+Localidad ||--o{ Agencia
+Localidad ||--o{ Agente
+Localidad ||--o{ Cliente
 
 Aspecto |o--|{CalificacionPorEncuesta
 CalificacionPorEncuesta}|--||Encuesta
