@@ -75,8 +75,8 @@ entity "Venta" {
 entity "Hospedaje"{
     * Hospedaje_Codigo : nvarchar(255) <<PK>>
     --
-    * Hospedaje_Ciudad : nvarchar(255)
-    * Hospedaje_Pais : nvarchar(255)
+    * Hospedaje_Ciudad_Cod : bigint <<FK>>
+    * Hospedaje_Pais : bigint <<FK>>
     * Hospedaje_Nombre : nvarchar(255)
     * Hospedaje_Direccion : nvarchar(255)
     * Hospedaje_Incluye_Desayuno : bit
@@ -164,9 +164,9 @@ entity SolicitudCotizacion {
 entity DetalleCiudad {
     * Detalle_Solicitud_cod_Ciudad : nvarchar (255) <<PK>>
     --
+    * Detalle_Solicitud_Ciudad_Cod : bigint <<FK>>
     * Detalle_Nro_Solicitud : bigint <<FK>>
     * Detalle_Solicitud_Cant_Dias_Aprox : int
-    * Detalle_Solicitud_Ciudad : nvarchar (255)
     * Detalle_Solicitud_Observaciones : nvarchar (max)
 
 }
@@ -213,8 +213,8 @@ entity DetallePropuestaHospedaje{
 entity "Aerolinea" {
     * Aerolinea_Codigo : nvarchar(255) <<PK>>
     --
+    * Aerolinea_Pais_Cod : biging <<FK>>
     * Aerolinea_Nombre : nvarchar(255)
-    * Aerolinea_Pais : nvarchar(255)
     * Aerolinea_Alianza : nvarchar(255)
 }
 
@@ -222,8 +222,7 @@ entity "Aeropuerto" {
     * Areopuerto_codigo : nvarchar(10) <<PK>>
     --
     * Aeropuerto_Descripcion : nvarchar(200)
-    * Aeropuerto_Ciudad : nvarchar(200)
-    * Aeropuerto_Pais : nvarchar(200)
+    * Aeropuerto_Ciudad_Cod : bigint <<FK>>
 }
 
 entity "Encuesta" {
@@ -261,6 +260,18 @@ entity "Canal_Venta" {
     * Canal_Detalle : nvarchar(255)
 }
 
+entity "Pais" {
+    * Pais_cod: bigint <<PK>>
+    --
+    *Pais_Nombre: nvarchar(255);
+}
+
+entity "Ciudad" {
+    * Ciudad_cod : bigint <<PK>>
+    --
+    * Pais_cod : bigint <<FK>>
+    * Ciudad_Nombre: nvarchar(255);
+}
 
 
 
@@ -310,5 +321,10 @@ Propuesta}o--o|Venta
 Canal_Venta ||--o{ Venta
 Medio_Pago ||--o{ Venta
 
+Pais ||--|{Ciudad
+Ciudad ||--o{ Hospedaje
+Aeropuerto }o--|| Ciudad
+Aerolinea }o--|| Pais
+Ciudad ||--o{ DetalleCiudad
 
 @enduml
