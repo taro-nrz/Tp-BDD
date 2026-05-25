@@ -219,9 +219,15 @@ entity DetallePropuestaHospedaje{
 entity "Aerolinea" {
     * Aerolinea_Codigo : nvarchar(255) <<PK>>
     --
-    * Aerolinea_Pais_Cod : biging <<FK>>
+    * Aerolinea_Pais_Cod : bigint <<FK>>
+    * Aerolinea_Alianza_Cod : bigint <<FK>>
     * Aerolinea_Nombre : nvarchar(255)
-    * Aerolinea_Alianza : nvarchar(255)
+}
+
+entity "Alianza" {
+    * Alianza_Cod : bigint <<PK>>
+    --
+    * Alianza_Nombre : nvarchar(255)
 }
 
 entity "Aeropuerto" {
@@ -333,5 +339,7 @@ Ciudad ||--o{ Hospedaje
 Aeropuerto }o--|| Ciudad
 Aerolinea }o--|| Pais
 Ciudad ||--o{ DetalleCiudad
+
+Alianza ||--|{ Aerolinea
 
 @enduml
