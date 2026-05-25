@@ -64,11 +64,15 @@ entity "Venta" {
     * Agente_Legajo : bigint <<FK>>
     * Venta_Canal_Venta : bigint <<FK>>
     * Venta_Medio_Pago: bigint <<FK>>
-    * Propuesta_Nro_Propuesta : bigint <<FK>>
     * Venta_Fecha_Venta: date
     * Venta_Subtotal: decimal(18, 2)
     * Venta_Descuento : decimal(18, 2)
     * Venta_Importe_Total : decimal(18, 2)
+}
+
+entity Venta_Propuesta {
+    * Venta_Nro_Venta : bigint <<FK>>
+    * Propuesta_Nro_Propuesta : bigint <<FK>>
 }
 
 
@@ -324,8 +328,9 @@ SolicitudCotizacion||--o{Propuesta
 Propuesta|o--||Agente
 Propuesta||--o{DetallePropuestaVuelo
 Propuesta||--o{DetallePropuestaHospedaje
-Propuesta}o--o|Venta
 Propuesta}|--||Estado
+Venta ||--o| Venta_Propuesta
+Propuesta ||--o|Venta_Propuesta
 
 DetallePropuestaVuelo|o--||Vuelo
 DetallePropuestaHospedaje|o--||Hospedaje
