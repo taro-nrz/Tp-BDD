@@ -225,7 +225,7 @@ entity DetallePropuestaVuelo {
 }
 
 entity DetallePropuestaHospedaje{
-     * Detalle_Propuesta_Hospedaje_Cod : nvarchar(255) <<PK>>
+     * Detalle_Propuesta_Hospedaje_Cod : bigint <<PK>>
     --
      * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
      * Detalle_Propuesta_Hospedaje_Cod_Hospedaje: nvarchar(255) <<FK>>

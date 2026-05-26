@@ -314,7 +314,7 @@ ALTER TABLE GRUPO_BASES26.DetallePropuestaVuelo
 	REFERENCES GRUPO_BASES26.Vuelo (Vuelo_Codigo);
 ----------------------------
 CREATE TABLE GRUPO_BASES26.DetallePropuestaHospedaje (
-	Detalle_Propuesta_Hospedaje_Cod nvarchar(255) NOT NULL,
+	Detalle_Propuesta_Hospedaje_Cod bigint IDENTITY(1,1) NOT NULL,
 	Detalle_Propuesta_Cod_Propuesta bigint NOT NULL,
 	Detalle_Propuesta_Hospedaje_Cod_Hospedaje nvarchar(255) NOT NULL,
 	Detalle_Propuesta_Hospedaje_Fecha_Desde date NOT NULL,
