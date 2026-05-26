@@ -19,6 +19,7 @@ entity "Agencia" {
 entity "Agente" {
     * Agente_Legajo: bigint<<PK>>
     --
+    * Agencia_Nro_Agencia: bigint <<FK>>
     * Localidad_cod: bigint <<FK>>
 	* Agente_Nombre nvarchar(255)
 	* Agente_Apellido nvarchar(255)
@@ -88,9 +89,13 @@ entity "Hospedaje"{
     * Hospedaje_Check_Out : nvarchar(50)
 }
 entity Detalle_Venta_Hospedaje {
-    * Detalle_Venta_Hospedaje : int <<FK>>
     * Venta_Nro_Venta : bigint <<FK>>
+    * Habitacion_Codigo : nvarchar(50) <<FK>>
+    * Hospedaje_Codigo : nvarchar(255) <<FK>>
     --
+    * Detalle_Venta_Hospedaje_Fecha_Desde: date
+    * Detalle_Venta_Hospedaje_Fecha_Hasta: date
+    * Detalle_Venta_Hospedaje_Cantidad: int
     * Detalle_Venta_Hospedaje_Precio_Unitario: decimal(18, 2)
     * Detalle_Venta_Hospedaje_Subtotal: decimal(18, 2)
     * Detalle_Venta_Hospedaje_Cod_Reserva: nvarchar(255)
@@ -108,11 +113,20 @@ entity "Habitacion" {
 entity "Excursion"{
     * Excursion_Codigo : nvarchar(255) <<PK>>
     --
+    * Proveedor_Cod : bigint <<FK>>
     * Excursion_Nombre : nvarchar(255)
     * Excursion_Descripcion : nvarchar(max)
     * Excursion_Horario : nvarchar(50)
     * Excursion_Duracion : int
     * Excursion_Precio : decimal(18, 2)
+}
+
+entity "Proveedor" {
+    * Proveedor_Cod : bigint <<PK>>
+    --
+    * Proveedor_Nombre : nvarchar(255)
+    * Proveedor_Mail : nvarchar(255)
+    * Proveedor_Telefono : nvarchar(255)
 }
 
 entity Detalle_Venta_Excursion {
@@ -144,12 +158,13 @@ entity "Vuelo"{
 }
 
 entity Detalle_Venta_Vuelo{
-	* Detalle_Venta_Vuelo_Cod_Reserva : nvarchar(255) <<FK>>
 	* Venta_Nro_Venta : bigint <<FK>>
+	* Vuelo_Codigo : bigint <<FK>>
 	--
     * Detalle_Venta_Vuelo_Cantidad_Pasajes : int
 	* Detalle_Venta_Vuelo_Precio_Unitario : decimal(18, 2)
 	* Detalle_Venta_Vuelo_Subtotal : decimal(18, 2)
+	* Detalle_Venta_Vuelo_Cod_Reserva : nvarchar(255)
 }
 
 entity SolicitudCotizacion {
@@ -161,12 +176,13 @@ entity SolicitudCotizacion {
     * Solicitud_Fecha_Inicio_Tentativa : date
     * Solicitud_Fecha_Fin_Tentativa : date
     * Solicitud_Cant_Pax : int
+    * Solicitud_Observaciones : nvarchar(max)
     * Solicitud_Presupuesto_Estimado : decimal(18, 2)
 
 }
 
 entity DetalleCiudad {
-    * Detalle_Solicitud_cod_Ciudad : nvarchar (255) <<PK>>
+    * Detalle_Solicitud_cod_Ciudad : bigint <<PK>>
     --
     * Detalle_Solicitud_Ciudad_Cod : bigint <<FK>>
     * Detalle_Nro_Solicitud : bigint <<FK>>
@@ -244,11 +260,12 @@ entity "Aeropuerto" {
 entity "Encuesta" {
     * Encuesta_Codigo : bigint <<PK>>
     --
-    * cliente_cod: bigint <<FK>>
+    * Cliente_Cod: bigint <<FK>>
     * Agente_Legajo: bigint <<FK>>
     * Venta_Nro_Venta : bigint <<FK>>
     * Propuesta_Nro_Propuesta : bigint <<FK>>
-    * comentario : nvarchar(max)
+    * Encuesta_Fecha_Encuesta : date
+    * Encuesta_Comentarios : nvarchar(max)
 }
 
 entity CalificacionPorEncuesta {
@@ -305,6 +322,7 @@ Hospedaje |o--|{ Detalle_Venta_Hospedaje
 Detalle_Venta_Hospedaje }|--||Venta
 Hospedaje||--|{Habitacion
 Excursion }o--o{  Venta
+Excursion }o--|| Proveedor
 Excursion |o--|{Detalle_Venta_Excursion
 Detalle_Venta_Excursion }|--||Venta
 
@@ -317,7 +335,8 @@ Localidad ||--o{ Cliente
 Aspecto |o--|{CalificacionPorEncuesta
 CalificacionPorEncuesta}|--||Encuesta
 
-Encuesta|o--||Venta
+Encuesta|o--o|Venta
+Encuesta|o--o|Propuesta
 
 Cliente||--o{SolicitudCotizacion
 SolicitudCotizacion}o--||Agente
