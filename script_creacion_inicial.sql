@@ -475,3 +475,37 @@ ALTER TABLE GRUPO_BASES26.CalificacionPorEncuesta
 	REFERENCES GRUPO_BASES26.Aspecto (Aspecto_Codigo);
 ALTER TABLE GRUPO_BASES26.CalificacionPorEncuesta
 	ADD CONSTRAINT chk_calificacion_aspecto CHECK (Aspecto_Calificacion BETWEEN 1 AND 5);
+
+
+
+
+
+---- Migracion
+
+INSERT INTO GRUPO_BASES26.Provincia (Provincia_Nombre)
+SELECT m.Agente_Provincia
+FROM gd_esquema.Maestra m
+WHERE m.Agente_Provincia is not null
+UNION
+SELECT m.Agencia_Provincia
+FROM gd_esquema.Maestra m
+WHERE m.Agencia_Provincia is not null
+UNION
+SELECT m.Cliente_Provincia
+FROM gd_esquema.Maestra m
+WHERE m.Cliente_Provincia is not null;
+
+------------------------------------
+
+INSERT INTO GRUPO_BASES26.Localidad (Provincia_Cod,Localidad_Nombre)
+SELECT p.Provincia_Cod, ap.Agente_Localidad
+FROM GRUPO_BASES26.Provincia p
+INNER JOIN (SELECT Agente_Provincia, Agente_Localidad FROM gd_esquema.Maestra) ap ON ap.Agente_Provincia = p.Provincia_Nombre
+UNION
+SELECT p.Provincia_Cod, ap.Agencia_Localidad
+FROM GRUPO_BASES26.Provincia p
+INNER JOIN (SELECT Agencia_Provincia, Agencia_Localidad FROM gd_esquema.Maestra) ap ON ap.Agencia_Provincia = p.Provincia_Nombre
+UNION
+SELECT p.Provincia_Cod, ap.Cliente_Localidad
+FROM GRUPO_BASES26.Provincia p
+		INNER JOIN (SELECT Cliente_Provincia, Cliente_Localidad FROM gd_esquema.Maestra) ap ON ap.Cliente_Provincia = p.Provincia_Nombre;
