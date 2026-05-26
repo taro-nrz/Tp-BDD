@@ -509,3 +509,14 @@ UNION
 SELECT p.Provincia_Cod, ap.Cliente_Localidad
 FROM GRUPO_BASES26.Provincia p
 		INNER JOIN (SELECT Cliente_Provincia, Cliente_Localidad FROM gd_esquema.Maestra) ap ON ap.Cliente_Provincia = p.Provincia_Nombre;
+
+-----------------------------------
+
+INSERT INTO GRUPO_BASES26.Agencia (Agencia_Nro_Agencia,Localidad_Cod,Agencia_Direccion, Agencia_Telefono, Agencia_Mail)
+SELECT DISTINCT(m.Agencia_Nro_Agencia),Localidad_Cod,m.Agencia_Direccion, m.Agencia_Telefono, m.Agencia_Mail
+FROM gd_esquema.Maestra m
+INNER JOIN (
+		SELECT l.Localidad_Cod, l.Localidad_Nombre, p.Provincia_nombre
+		FROM GRUPO_BASES26.Localidad l
+		INNER JOIN GRUPO_BASES26.Provincia p ON p.Provincia_Cod = l.Provincia_Cod
+	) r ON m.Agencia_Localidad = r.Localidad_Nombre AND m.Agencia_Provincia = r.Provincia_Nombre
