@@ -653,3 +653,11 @@ FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Provincia p ON m.Cliente_Provincia = p.Provincia_Nombre
 INNER JOIN GRUPO_BASES26.Localidad l ON m.Cliente_Localidad = l.Localidad_Nombre AND l.Provincia_Cod = p.Provincia_Cod
 WHERE m.Cliente_Dni is not null;
+
+-- Vuelo
+
+INSERT INTO GRUPO_BASES26.Vuelo (Aerolinea_Codigo, Aeropuerto_Salida_Codigo,Aeropuerto_Llegada_Codigo,Vuelo_Fecha_Salida,Vuelo_Hora_Salida,Vuelo_Fecha_Llegada,Vuelo_Hora_Llegada,Vuelo_Duracion,Vuelo_Precio,Vuelo_Incluye_Carry,Vuelo_Incluye_Valija)
+SELECT DISTINCT Aerolinea_Codigo, Aeropuerto_Salida_Codigo, Aeropuerto_Llegada_Codigo, Vuelo_Fecha_Salida, Vuelo_Horario_Salida, Vuelo_Fecha_Llegada,Vuelo_Horario_Llegada, Vuelo_Duracion, Vuelo_Precio, Vuelo_Incluye_Carry, Vuelo_Incluye_Valija
+FROM gd_esquema.Maestra
+WHERE Aerolinea_Codigo IS NOT NULL 
+  AND Aeropuerto_Salida_Codigo IS NOT NULL;
