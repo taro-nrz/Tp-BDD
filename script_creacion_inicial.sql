@@ -602,21 +602,35 @@ select DISTINCT
 from gd_esquema.Maestra
 where Hospedaje_Ciudad is not null and Hospedaje_Pais is not null 
 
-INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
-select DISTINCT detalle_Solicitud_Ciudad, t.Pais_Nombre from gd_esquema.Maestra inner join #TempCiudadPais t on Ciudad_Nombre = Detalle_Solicitud_Ciudad
+-- INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
+-- select DISTINCT detalle_Solicitud_Ciudad, t.Pais_Nombre from gd_esquema.Maestra inner join #TempCiudadPais t on Ciudad_Nombre = Detalle_Solicitud_Ciudad
 
+
+-- INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
+-- SELECT DISTINCT 
+--     P.Pais_Cod, 
+--     T.Ciudad_Nombre
+-- FROM #TempCiudadPais T
+-- INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;	
+
+-- drop table  #TempCiudadPais
 
 INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
 SELECT DISTINCT 
     P.Pais_Cod, 
     T.Ciudad_Nombre
 FROM #TempCiudadPais T
-INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;	
+INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;
 
-drop table  #TempCiudadPais
+DROP TABLE #TempCiudadPais;
 
 ---------------------------------------
 
-
-select * from gd_esquema.Maestra
-select * from GRUPO_BASES26.Alianza
+INSERT INTO GRUPO_BASES26.Aeropuerto (Aeropuerto_Cod,Aeropuerto_Descripcion,Aeropuerto_Ciudad_Cod)
+SELECT m.Aeropuerto_Salida_Codigo, m.Aeropuerto_Salida_Descripcion, c.Ciudad_Cod
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Salida_Ciudad
+UNION
+SELECT m.Aeropuerto_Llegada_Codigo, m.Aeropuerto_Llegada_Descripcion, c.Ciudad_Cod
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Llegada_Ciudad
