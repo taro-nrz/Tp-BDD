@@ -163,7 +163,7 @@ ALTER TABLE GRUPO_BASES26.Cliente
 	REFERENCES GRUPO_BASES26.Localidad (Localidad_Cod);
 ----------------------------
 CREATE TABLE GRUPO_BASES26.Hospedaje (
-	Hospedaje_Codigo nvarchar(255) NOT NULL,
+	Hospedaje_Codigo bigint IDENTITY(1,1) NOT NULL,
 	Hospedaje_Ciudad_Cod bigint NOT NULL,
 	Hospedaje_Pais bigint NOT NULL,
 	Hospedaje_Nombre nvarchar(255) NOT NULL,
@@ -182,8 +182,8 @@ ALTER TABLE GRUPO_BASES26.Hospedaje
 	REFERENCES GRUPO_BASES26.Pais (Pais_Cod);
 ----------------------------
 CREATE TABLE GRUPO_BASES26.Habitacion (
-	Habitacion_Codigo nvarchar(50) NOT NULL,
-	Hospedaje_Codigo nvarchar(255) NOT NULL,
+	Habitacion_Codigo bigint IDENTITY(1,1) NOT NULL,
+	Hospedaje_Codigo bigint NOT NULL,
 	Habitacion_Nombre nvarchar(255) NOT NULL,
 	Habitacion_Descripcion nvarchar(max) NOT NULL,
 	Habitacion_Precio_Noche decimal(18, 2) NULL
@@ -195,7 +195,7 @@ ALTER TABLE GRUPO_BASES26.Habitacion
 	REFERENCES GRUPO_BASES26.Hospedaje (Hospedaje_Codigo);
 ----------------------------
 CREATE TABLE GRUPO_BASES26.Excursion (
-	Excursion_Codigo nvarchar(255) NOT NULL,
+	Excursion_Codigo bigint IDENTITY(1,1) NOT NULL,
 	Proveedor_Cod bigint NOT NULL,
 	Excursion_Nombre nvarchar(255) NOT NULL,
 	Excursion_Descripcion nvarchar(max) NOT NULL,
@@ -316,7 +316,7 @@ ALTER TABLE GRUPO_BASES26.DetallePropuestaVuelo
 CREATE TABLE GRUPO_BASES26.DetallePropuestaHospedaje (
 	Detalle_Propuesta_Hospedaje_Cod bigint IDENTITY(1,1) NOT NULL,
 	Detalle_Propuesta_Cod_Propuesta bigint NOT NULL,
-	Detalle_Propuesta_Hospedaje_Cod_Hospedaje nvarchar(255) NOT NULL,
+	Detalle_Propuesta_Hospedaje_Cod_Hospedaje bigint NOT NULL,
 	Detalle_Propuesta_Hospedaje_Fecha_Desde date NOT NULL,
 	Detalle_Propuesta_Hospedaje_Fecha_Hasta date NOT NULL,
 	Detalle_Propuesta_Hospedaje_Cant int NOT NULL,
@@ -398,8 +398,8 @@ ALTER TABLE GRUPO_BASES26.Detalle_Venta_Vuelo
 ----------------------------
 CREATE TABLE GRUPO_BASES26.Detalle_Venta_Hospedaje (
 	Venta_Nro_Venta bigint NOT NULL,
-	Habitacion_Codigo nvarchar(50) NOT NULL,
-	Hospedaje_Codigo nvarchar(255) NOT NULL,
+	Habitacion_Codigo bigint NOT NULL,
+	Hospedaje_Codigo bigint NOT NULL,
 	Detalle_Venta_Hospedaje_Fecha_Desde date NOT NULL,
 	Detalle_Venta_Hospedaje_Fecha_Hasta date NOT NULL,
 	Detalle_Venta_Hospedaje_Cantidad int NOT NULL,
@@ -417,7 +417,7 @@ ALTER TABLE GRUPO_BASES26.Detalle_Venta_Hospedaje
 	REFERENCES GRUPO_BASES26.Habitacion (Habitacion_Codigo, Hospedaje_Codigo);
 ----------------------------
 CREATE TABLE GRUPO_BASES26.Detalle_Venta_Excursion (
-	Excursion_Codigo nvarchar(255) NOT NULL,
+	Excursion_Codigo bigint NOT NULL,
 	Venta_Nro_Venta bigint NOT NULL,
 	Detalle_Venta_Excursion_Fecha_Reserva date NOT NULL,
 	Detalle_Venta_Excursion_Cant int NOT NULL,
@@ -540,6 +540,54 @@ FROM gd_esquema.Maestra WHERE Hospedaje_Pais IS NOT NULL AND Hospedaje_Pais <> '
 order by Pais_Nombre;
 
 ---------------------------------
+-- ciudad
+--creo tabla temporal
+
+CREATE TABLE #TempCiudadPais (
+                                 Ciudad_Nombre nvarchar(255),
+                                 Pais_Nombre nvarchar(255)
+);
+INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
+select DISTINCT
+    Aeropuerto_Llegada_Ciudad,
+    Aeropuerto_Llegada_Pais
+from gd_esquema.Maestra
+where Aeropuerto_Llegada_Ciudad is not null and Aeropuerto_Llegada_Pais is not null
+union
+select DISTINCT
+    Aeropuerto_Salida_Ciudad,
+    Aeropuerto_Salida_Pais
+from gd_esquema.Maestra
+where Aeropuerto_Salida_Ciudad is not null and Aeropuerto_Salida_Pais is not null
+union
+select DISTINCT
+    Hospedaje_Ciudad,
+    Hospedaje_Pais
+from gd_esquema.Maestra
+where Hospedaje_Ciudad is not null and Hospedaje_Pais is not null
+
+-- INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
+-- select DISTINCT detalle_Solicitud_Ciudad, t.Pais_Nombre from gd_esquema.Maestra inner join #TempCiudadPais t on Ciudad_Nombre = Detalle_Solicitud_Ciudad
+
+
+-- INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
+-- SELECT DISTINCT
+--     P.Pais_Cod,
+--     T.Ciudad_Nombre
+-- FROM #TempCiudadPais T
+-- INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;
+
+-- drop table  #TempCiudadPais
+
+    INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
+SELECT DISTINCT
+    P.Pais_Cod,
+    T.Ciudad_Nombre
+FROM #TempCiudadPais T
+         INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;
+
+DROP TABLE #TempCiudadPais;
+---------------------------------------
 --CAnal de venta
 
 insert into GRUPO_BASES26.Canal_Venta (Canal_Detalle)
@@ -573,57 +621,35 @@ INSERT INTO GRUPO_BASES26.Proveedor (Proveedor_Mail, Proveedor_Nombre, Proveedor
 SELECT DISTINCT Proveedor_Mail, Proveedor_Nombre, Proveedor_Telefono FROM gd_esquema.Maestra WHERE Proveedor_Nombre IS NOT NULL;
 
 --------------------------------
--- ciudad
-
-
-
---creo tabla temporal 
-
-CREATE TABLE #TempCiudadPais (
-    Ciudad_Nombre nvarchar(255),
-    Pais_Nombre nvarchar(255)
-	);
-INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
-select DISTINCT 
-	Aeropuerto_Llegada_Ciudad,
-	Aeropuerto_Llegada_Pais 
-from gd_esquema.Maestra
-where Aeropuerto_Llegada_Ciudad is not null and Aeropuerto_Llegada_Pais is not null
-union
-select DISTINCT 
-	Aeropuerto_Salida_Ciudad,
-	Aeropuerto_Salida_Pais
-from gd_esquema.Maestra
-where Aeropuerto_Salida_Ciudad is not null and Aeropuerto_Salida_Pais is not null
-union
-select DISTINCT
-	Hospedaje_Ciudad,
-	Hospedaje_Pais
-from gd_esquema.Maestra
-where Hospedaje_Ciudad is not null and Hospedaje_Pais is not null 
-
--- INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
--- select DISTINCT detalle_Solicitud_Ciudad, t.Pais_Nombre from gd_esquema.Maestra inner join #TempCiudadPais t on Ciudad_Nombre = Detalle_Solicitud_Ciudad
-
-
--- INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
--- SELECT DISTINCT 
---     P.Pais_Cod, 
---     T.Ciudad_Nombre
--- FROM #TempCiudadPais T
--- INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;	
-
--- drop table  #TempCiudadPais
-
-INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
-SELECT DISTINCT 
-    P.Pais_Cod, 
-    T.Ciudad_Nombre
-FROM #TempCiudadPais T
-INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;
-
-DROP TABLE #TempCiudadPais;
-
+--Agente
+INSERT INTO GRUPO_BASES26.Agente (Agente_Legajo, Agencia_Nro_Agencia, Localidad_Cod, Agente_Nombre, Agente_Apellido,
+                                  Agente_Dni, Agente_Fecha_Nac, Agente_Telefono, Agente_Mail, Agente_Direccion)
+SELECT DISTINCT m.Agente_Legajo, m.Agencia_Nro_Agencia, l.Localidad_Cod, m.Agente_Nombre, m.Agente_Apellido,
+                m.Agente_Dni, m.Agente_Fecha_Nac, m.Agente_Telefono, m.Agente_Mail, m.Agente_Direccion
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Provincia p ON p.Provincia_Nombre= m.Agente_Provincia
+INNER JOIN GRUPO_BASES26.Localidad l ON l.Localidad_Nombre= m.Agente_Localidad AND l.Provincia_Cod = p.Provincia_Cod
+WHERE m.Agente_legajo IS NOT NULL;
+--------------------------------------
+--Hospedaje
+INSERT INTO GRUPO_BASES26.Hospedaje (Hospedaje_Ciudad_Cod, Hospedaje_Pais, Hospedaje_Nombre,
+                                     Hospedaje_Direccion, Hospedaje_Incluye_Desayuno, Hospedaje_Check_In, Hospedaje_Check_Out)
+SELECT DISTINCT c.Ciudad_Cod, p.Pais_Cod, m.Hospedaje_Nombre,
+                m.Hospedaje_Direccion, m.Hospedaje_Incluye_Desayuno, m.Hospedaje_Check_In, m.Hospedaje_Check_Out
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre = m.Hospedaje_Pais
+INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre= m.Hospedaje_Ciudad AND c.Pais_Cod = p.Pais_Cod
+WHERE m.Hospedaje_Nombre IS NOT NULL;
+--------------------------------------
+--Habitación
+INSERT INTO GRUPO_BASES26.Habitacion (Hospedaje_Codigo, Habitacion_Nombre, Habitacion_Descripcion, Habitacion_Precio_Noche)
+SELECT DISTINCT h.Hospedaje_Codigo, m.Habitacion_Nombre, m.Habitacion_Descripcion, m.Habitacion_Precio_Noche
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre= m.Hospedaje_Pais
+INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre= m.Hospedaje_Ciudad AND c.Pais_Cod=p.Pais_Cod
+INNER JOIN GRUPO_BASES26.Hospedaje h ON h.Hospedaje_Nombre = m.Hospedaje_Nombre AND h.Hospedaje_Ciudad_Cod=c.Ciudad_Cod
+WHERE m.Habitacion_Nombre IS NOT NULL;
+-------------------------------------------
 ---------------------------------------
 
 -- Aeropuerto
@@ -636,7 +662,7 @@ UNION
 SELECT m.Aeropuerto_Llegada_Codigo, m.Aeropuerto_Llegada_Descripcion, c.Ciudad_Cod
 FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Llegada_Ciudad;
-
+-------------------------------------------
 -- Aerolinea
 
 INSERT INTO GRUPO_BASES26.Aerolinea (Aerolinea_Codigo,Aerolinea_Nombre,Aerolinea_Alianza_Cod,Aerolinea_Pais_Cod)
@@ -644,7 +670,7 @@ SELECT DISTINCT(m.Aerolinea_Codigo), m.Aerolinea_Nombre, a.Alianza_Cod, p.Pais_C
 FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Alianza a ON a.Alianza_Nombre = m.Aerolinea_Alianza
 INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre = m.Aerolinea_Pais;
-
+-------------------------------------------
 -- Cliente
 
 INSERT INTO GRUPO_BASES26.Cliente (Localidad_Cod, Cliente_Nombre, Cliente_Apellido, Cliente_Dni, Cliente_Tel, Cliente_Mail, Cliente_Direccion, Cliente_Fecha_Nac)
@@ -653,7 +679,7 @@ FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Provincia p ON m.Cliente_Provincia = p.Provincia_Nombre
 INNER JOIN GRUPO_BASES26.Localidad l ON m.Cliente_Localidad = l.Localidad_Nombre AND l.Provincia_Cod = p.Provincia_Cod
 WHERE m.Cliente_Dni is not null;
-
+-------------------------------------------
 -- Vuelo
 
 INSERT INTO GRUPO_BASES26.Vuelo (Aerolinea_Codigo, Aeropuerto_Salida_Codigo,Aeropuerto_Llegada_Codigo,Vuelo_Fecha_Salida,Vuelo_Hora_Salida,Vuelo_Fecha_Llegada,Vuelo_Hora_Llegada,Vuelo_Duracion,Vuelo_Precio,Vuelo_Incluye_Carry,Vuelo_Incluye_Valija)
@@ -661,3 +687,10 @@ SELECT DISTINCT Aerolinea_Codigo, Aeropuerto_Salida_Codigo, Aeropuerto_Llegada_C
 FROM gd_esquema.Maestra
 WHERE Aerolinea_Codigo IS NOT NULL 
   AND Aeropuerto_Salida_Codigo IS NOT NULL;
+-------------------------------------------
+--Excursion
+INSERT INTO GRUPO_BASES26.Excursion(Proveedor_Cod, Excursion_Nombre, Excursion_Descripcion, Excursion_Horario, Excursion_Duracion, Excursion_Precio)
+SELECT DISTINCT p.Proveedor_Cod, m.Excursion_Nombre, m.Excursion_Descripcion, m.Excursion_Horario, m.Excursion_Duracion, m.Excursion_Precio
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Proveedor p ON p.Proveedor_Nombre = m.Proveedor_Nombre
+WHERE m.Excursion_Nombre IS NOT NULL;

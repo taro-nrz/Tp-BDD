@@ -78,7 +78,7 @@ entity Venta_Propuesta {
 
 
 entity "Hospedaje"{
-    * Hospedaje_Codigo : nvarchar(255) <<PK>>
+    * Hospedaje_Codigo : bigint <<PK>>
     --
     * Hospedaje_Ciudad_Cod : bigint <<FK>>
     * Hospedaje_Pais : bigint <<FK>>
@@ -90,8 +90,8 @@ entity "Hospedaje"{
 }
 entity Detalle_Venta_Hospedaje {
     * Venta_Nro_Venta : bigint <<FK>>
-    * Habitacion_Codigo : nvarchar(50) <<FK>>
-    * Hospedaje_Codigo : nvarchar(255) <<FK>>
+    * Habitacion_Codigo : bigint <<FK>>
+    * Hospedaje_Codigo : bigint <<FK>>
     --
     * Detalle_Venta_Hospedaje_Fecha_Desde: date
     * Detalle_Venta_Hospedaje_Fecha_Hasta: date
@@ -102,16 +102,16 @@ entity Detalle_Venta_Hospedaje {
 }
 
 entity "Habitacion" {
-    * Habitacion_Codigo : nvarchar(50) <<PK>>
+    * Habitacion_Codigo : bigint <<PK>>
     --
-    * Hospedaje_Codigo : nvarchar(255) <<FK>>
+    * Hospedaje_Codigo : bigint <<FK>>
     * Habitacion_Nombre: nvarchar(255)
     * Habitacion_Descripcion: nvarchar(max)
     * Habitacion_Precio_Noche: decimal(18, 2)
 }
 
 entity "Excursion"{
-    * Excursion_Codigo : nvarchar(255) <<PK>>
+    * Excursion_Codigo : bigint <<PK>>
     --
     * Proveedor_Cod : bigint <<FK>>
     * Excursion_Nombre : nvarchar(255)
@@ -130,7 +130,7 @@ entity "Proveedor" {
 }
 
 entity Detalle_Venta_Excursion {
-    * Excursion_Codigo: nvarchar(255) <<FK>>
+    * Excursion_Codigo: bigint <<FK>>
     * Venta_Nro_Venta : bigint <<FK>>
     --
     *Detalle_Venta_Excursion_Fecha_Reserva: date
@@ -228,7 +228,7 @@ entity DetallePropuestaHospedaje{
      * Detalle_Propuesta_Hospedaje_Cod : bigint <<PK>>
     --
      * Detalle_Propuesta_Cod_Propuesta : bigint <<FK>>
-     * Detalle_Propuesta_Hospedaje_Cod_Hospedaje: nvarchar(255) <<FK>>
+     * Detalle_Propuesta_Hospedaje_Cod_Hospedaje: bigint <<FK>>
      * Detalle_Propuesta_Hospedaje_Fecha_Desde: date
      * Detalle_Propuesta_Hospedaje_Fecha_Hasta: date
      * Detalle_Propuesta_Hospedaje_Cant: int
