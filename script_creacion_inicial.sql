@@ -635,7 +635,7 @@ INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Salida_Ciuda
 UNION
 SELECT m.Aeropuerto_Llegada_Codigo, m.Aeropuerto_Llegada_Descripcion, c.Ciudad_Cod
 FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Llegada_Ciudad
+INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Llegada_Ciudad;
 
 -- Aerolinea
 
@@ -643,4 +643,13 @@ INSERT INTO GRUPO_BASES26.Aerolinea (Aerolinea_Codigo,Aerolinea_Nombre,Aerolinea
 SELECT DISTINCT(m.Aerolinea_Codigo), m.Aerolinea_Nombre, a.Alianza_Cod, p.Pais_Cod
 FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Alianza a ON a.Alianza_Nombre = m.Aerolinea_Alianza
-INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre = m.Aerolinea_Pais
+INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre = m.Aerolinea_Pais;
+
+-- Cliente
+
+INSERT INTO GRUPO_BASES26.Cliente (Localidad_Cod, Cliente_Nombre, Cliente_Apellido, Cliente_Dni, Cliente_Tel, Cliente_Mail, Cliente_Direccion, Cliente_Fecha_Nac)
+SELECT DISTINCT l.Localidad_Cod, m.Cliente_Nombre, m.Cliente_Apellido, m.Cliente_Dni, m.Cliente_Tel, m.Cliente_Mail, m.Cliente_Direccion, m.Cliente_Fecha_Nac
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Provincia p ON m.Cliente_Provincia = p.Provincia_Nombre
+INNER JOIN GRUPO_BASES26.Localidad l ON m.Cliente_Localidad = l.Localidad_Nombre AND l.Provincia_Cod = p.Provincia_Cod
+WHERE m.Cliente_Dni is not null;
