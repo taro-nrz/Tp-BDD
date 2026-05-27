@@ -1,4 +1,4 @@
-USE [GD1C2026]
+USE GD1C2026
 GO
 
 CREATE SCHEMA [GRUPO_BASES26]
@@ -520,3 +520,103 @@ INNER JOIN (
 		FROM GRUPO_BASES26.Localidad l
 		INNER JOIN GRUPO_BASES26.Provincia p ON p.Provincia_Cod = l.Provincia_Cod
 	) r ON m.Agencia_Localidad = r.Localidad_Nombre AND m.Agencia_Provincia = r.Provincia_Nombre
+
+----------------------------------
+-- paices
+
+
+INSERT INTO GRUPO_BASES26.Pais (Pais_Nombre)
+SELECT Aerolinea_Pais  as Pais_Nombre
+FROM gd_esquema.Maestra WHERE Aerolinea_Pais IS NOT NULL AND Aerolinea_Pais <> ''
+UNION
+SELECT Aeropuerto_Salida_Pais  as Pais_Nombre
+FROM gd_esquema.Maestra WHERE Aeropuerto_Salida_Pais IS NOT NULL AND Aeropuerto_Salida_Pais <> ''
+UNION
+SELECT Aeropuerto_Llegada_Pais  Pais_Nombre
+FROM gd_esquema.Maestra WHERE Aeropuerto_Llegada_Pais IS NOT NULL AND Aeropuerto_Llegada_Pais <> ''
+UNION
+SELECT Hospedaje_Pais as Pais_Nombre
+FROM gd_esquema.Maestra WHERE Hospedaje_Pais IS NOT NULL AND Hospedaje_Pais <> ''
+order by Pais_Nombre;
+
+---------------------------------
+--CAnal de venta
+
+insert into GRUPO_BASES26.Canal_Venta (Canal_Detalle)
+SELECT Venta_Canal_Venta FROM gd_esquema.Maestra WHERE Venta_canal_venta is not null GROUP BY Venta_Canal_Venta order by Venta_Canal_Venta asc
+
+---------------------------------
+--Alianza
+INSERT INTO GRUPO_BASES26.Alianza (Alianza_Nombre)
+SELECT Aerolinea_Alianza FROM gd_esquema.Maestra WHERE Aerolinea_Alianza is not null GROUP BY Aerolinea_Alianza order by Aerolinea_Alianza asc
+
+--------------------------------
+-- medio de PAgo
+
+INSERT INTO GRUPO_BASES26.Medio_Pago (Medio_Detalle)
+select Venta_Medio_Pago from gd_esquema.Maestra where Venta_Medio_Pago is not null group by Venta_Medio_Pago order by Venta_Medio_Pago asc
+
+-------------------------------
+--  aspecto
+INSERT INTO GRUPO_BASES26.Aspecto (Aspecto_Descripcion)
+select Aspecto_Aspecto from gd_esquema.Maestra where Aspecto_Aspecto is not null group by Aspecto_Aspecto order by Aspecto_Aspecto asc
+
+-------------------------------
+-- Estado
+INSERT INTO GRUPO_BASES26.Estado (Estado_Nombre)
+select Propuesta_Estado from gd_esquema.Maestra where Propuesta_Estado is not null group by Propuesta_Estado order by Propuesta_Estado asc
+
+-------------------------------
+-- Proveedor
+
+INSERT INTO GRUPO_BASES26.Proveedor (Proveedor_Mail, Proveedor_Nombre, Proveedor_Telefono)
+SELECT DISTINCT Proveedor_Mail, Proveedor_Nombre, Proveedor_Telefono FROM gd_esquema.Maestra WHERE Proveedor_Nombre IS NOT NULL;
+
+--------------------------------
+-- ciudad
+
+
+
+--creo tabla temporal 
+
+CREATE TABLE #TempCiudadPais (
+    Ciudad_Nombre nvarchar(255),
+    Pais_Nombre nvarchar(255)
+	);
+INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
+select DISTINCT 
+	Aeropuerto_Llegada_Ciudad,
+	Aeropuerto_Llegada_Pais 
+from gd_esquema.Maestra
+where Aeropuerto_Llegada_Ciudad is not null and Aeropuerto_Llegada_Pais is not null
+union
+select DISTINCT 
+	Aeropuerto_Salida_Ciudad,
+	Aeropuerto_Salida_Pais
+from gd_esquema.Maestra
+where Aeropuerto_Salida_Ciudad is not null and Aeropuerto_Salida_Pais is not null
+union
+select DISTINCT
+	Hospedaje_Ciudad,
+	Hospedaje_Pais
+from gd_esquema.Maestra
+where Hospedaje_Ciudad is not null and Hospedaje_Pais is not null 
+
+INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
+select DISTINCT detalle_Solicitud_Ciudad, t.Pais_Nombre from gd_esquema.Maestra inner join #TempCiudadPais t on Ciudad_Nombre = Detalle_Solicitud_Ciudad
+
+
+INSERT INTO GRUPO_BASES26.Ciudad (Pais_Cod, Ciudad_Nombre)
+SELECT DISTINCT 
+    P.Pais_Cod, 
+    T.Ciudad_Nombre
+FROM #TempCiudadPais T
+INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.Pais_Nombre;	
+
+drop table  #TempCiudadPais
+
+---------------------------------------
+
+
+select * from gd_esquema.Maestra
+select * from GRUPO_BASES26.Alianza
