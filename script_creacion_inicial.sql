@@ -626,6 +626,8 @@ DROP TABLE #TempCiudadPais;
 
 ---------------------------------------
 
+-- Aeropuerto
+
 INSERT INTO GRUPO_BASES26.Aeropuerto (Aeropuerto_Cod,Aeropuerto_Descripcion,Aeropuerto_Ciudad_Cod)
 SELECT m.Aeropuerto_Salida_Codigo, m.Aeropuerto_Salida_Descripcion, c.Ciudad_Cod
 FROM gd_esquema.Maestra m
@@ -634,3 +636,11 @@ UNION
 SELECT m.Aeropuerto_Llegada_Codigo, m.Aeropuerto_Llegada_Descripcion, c.Ciudad_Cod
 FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre = m.Aeropuerto_Llegada_Ciudad
+
+-- Aerolinea
+
+INSERT INTO GRUPO_BASES26.Aerolinea (Aerolinea_Codigo,Aerolinea_Nombre,Aerolinea_Alianza_Cod,Aerolinea_Pais_Cod)
+SELECT DISTINCT(m.Aerolinea_Codigo), m.Aerolinea_Nombre, a.Alianza_Cod, p.Pais_Cod
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Alianza a ON a.Alianza_Nombre = m.Aerolinea_Alianza
+INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre = m.Aerolinea_Pais
