@@ -479,8 +479,9 @@ ALTER TABLE GRUPO_BASES26.CalificacionPorEncuesta
 
 
 
-
----- Migracion
+--==================================================
+--Migracion
+--==================================================
 
 INSERT INTO GRUPO_BASES26.Provincia (Provincia_Nombre)
 SELECT m.Agente_Provincia
@@ -694,3 +695,167 @@ SELECT DISTINCT p.Proveedor_Cod, m.Excursion_Nombre, m.Excursion_Descripcion, m.
 FROM gd_esquema.Maestra m
 INNER JOIN GRUPO_BASES26.Proveedor p ON p.Proveedor_Nombre = m.Proveedor_Nombre
 WHERE m.Excursion_Nombre IS NOT NULL;
+GO
+
+-------------------------------------------
+-- SolicitudCotizacion
+-- La Maestra tiene el nro de solicitud, fechas, pax y presupuesto directamente.
+-- Para Solicitud_cod_cliente necesitamos el Cliente_Cod que generamos con IDENTITY,
+-- así que hacemos JOIN con nuestra tabla Cliente usando DNI + nombre + apellido.
+-- Para Solicitud_Agente usamos Agente_Legajo, que es la clave natural del agente en la Maestra.
+-- DISTINCT porque la misma solicitud puede aparecer en múltiples filas (una por cada detalle).
+
+CREATE PROCEDURE GRUPO_BASES26.MigrarSolicitudCotizacion
+AS
+BEGIN
+    INSERT INTO GRUPO_BASES26.SolicitudCotizacion (
+        Solicitud_Nro_Solicitud,
+        Solicitud_cod_cliente,
+        Solicitud_Agente,
+        Solicitud_Fecha_Solicitud,
+        Solicitud_Fecha_Inicio_Tentativa,
+        Solicitud_Fecha_Fin_Tentativa,
+        Solicitud_Cant_Pax,
+        Solicitud_Observaciones,
+        Solicitud_Presupuesto_Estimado
+    )
+    SELECT DISTINCT
+        m.Solicitud_Nro_Solicitud,
+        c.Cliente_Cod,
+        m.Agente_Legajo,
+        m.Solicitud_Fecha_Solicitud,
+        m.Solicitud_Fecha_Inicio_Tentativa,
+        m.Solicitud_Fecha_Fin_Tentativa,
+        m.Solicitud_Cant_Pax,
+        m.Solicitud_Observaciones,
+        m.Solicitud_Presupuesto_Estimado
+    FROM gd_esquema.Maestra m
+    INNER JOIN GRUPO_BASES26.Cliente c
+        ON  c.Cliente_Dni      = m.Cliente_Dni
+        AND c.Cliente_Nombre   = m.Cliente_Nombre
+        AND c.Cliente_Apellido = m.Cliente_Apellido
+    WHERE m.Solicitud_Nro_Solicitud IS NOT NULL
+    AND m.Agente_Legajo IS NOT NULL;
+END
+GO
+
+EXEC GRUPO_BASES26.MigrarSolicitudCotizacion
+GO
+
+-------------------------------------------
+-- DetalleCiudad
+-- Cada fila de la Maestra con datos de solicitud puede tener una ciudad de destino.
+-- Buscamos el Ciudad_Cod haciendo JOIN por nombre de ciudad.
+-- No usamos DISTINCT porque cada fila es un detalle distinto (misma ciudad puede
+-- aparecer en múltiples solicitudes y eso está bien).
+
+CREATE PROCEDURE GRUPO_BASES26.MigrarDetalleCiudad
+AS
+BEGIN
+    INSERT INTO GRUPO_BASES26.DetalleCiudad (
+        Detalle_Solicitud_Ciudad_Cod,
+        Detalle_Nro_Solicitud,
+        Detalle_Solicitud_Cant_Dias_Aprox,
+        Detalle_Solicitud_Observaciones
+    )
+    SELECT
+        ci.Ciudad_Cod,
+        m.Solicitud_Nro_Solicitud,
+        m.Detalle_Solicitud_Cant_Dias_Aprox,
+        m.Detalle_Solicitud_Observaciones
+    FROM gd_esquema.Maestra m
+    INNER JOIN GRUPO_BASES26.Ciudad ci
+        ON ci.Ciudad_Nombre = m.Detalle_Solicitud_Ciudad
+    WHERE m.Solicitud_Nro_Solicitud IS NOT NULL
+      AND m.Detalle_Solicitud_Ciudad IS NOT NULL;
+END
+GO
+
+EXEC GRUPO_BASES26.MigrarDetalleCiudad
+GO
+
+-------------------------------------------
+-- Propuesta
+-- Propuesta_Solicitud y Propuesta_Agente vienen directo de la Maestra.
+-- Propuesta_Estado_Cod necesita JOIN con nuestra tabla Estado para obtener el código.
+-- DISTINCT porque la misma propuesta aparece repetida en múltiples filas
+-- (una por cada vuelo o hospedaje incluido en esa propuesta).
+
+CREATE PROCEDURE GRUPO_BASES26.MigrarPropuesta
+AS
+BEGIN
+    INSERT INTO GRUPO_BASES26.Propuesta (
+        Propuesta_Nro_Propuesta,
+        Propuesta_Solicitud,
+        Propuesta_Agente,
+        Propuesta_Estado_Cod,
+        Propuesta_Fecha_Emision,
+        Propuesta_Vigencia_Hasta,
+        Propuesta_Fecha_Desde,
+        Propuesta_Fecha_Hasta,
+        Propuesta_Subtotal,
+        Propuesta_Descuento,
+        Propuesta_Importe_Total
+    )
+    SELECT DISTINCT
+        m.Propuesta_Nro_Propuesta,
+        m.Solicitud_Nro_Solicitud,
+        m.Agente_Legajo,
+        e.Estado_Cod,
+        m.Propuesta_Fecha_Emision,
+        m.Propuesta_Vigencia_Hasta,
+        m.Propuesta_Fecha_Desde,
+        m.Propuesta_Fecha_Hasta,
+        m.Propuesta_Subtotal,
+        m.Propuesta_Descuento,
+        m.Propuesta_Importe_Total
+    FROM gd_esquema.Maestra m
+    INNER JOIN GRUPO_BASES26.Estado e
+        ON e.Estado_Nombre = m.Propuesta_Estado
+    WHERE m.Propuesta_Nro_Propuesta IS NOT NULL
+      AND m.Solicitud_Nro_Solicitud IS NOT NULL
+      AND m.Agente_Legajo IS NOT NULL;
+END
+GO
+
+EXEC GRUPO_BASES26.MigrarPropuesta
+GO
+
+-------------------------------------------
+-- DetallePropuestaVuelo
+-- Cada fila de la Maestra con propuesta y vuelo es un detalle distinto.
+-- Necesitamos el Vuelo_Codigo interno: JOIN con nuestra tabla Vuelo por
+-- aerolínea + aeropuerto salida + aeropuerto llegada + fecha salida,
+-- que identifica unívocamente al vuelo.
+-- Cantidad, precio unitario y subtotal vienen directo de la Maestra.
+
+CREATE PROCEDURE GRUPO_BASES26.MigrarDetallePropuestaVuelo
+AS
+BEGIN
+    INSERT INTO GRUPO_BASES26.DetallePropuestaVuelo (
+        Detalle_Propuesta_Vuelo_Cod_Vuelo,
+        Detalle_Propuesta_Cod_Propuesta,
+        Detalle_Propuesta_Vuelo_Cant_Pasajes,
+        Detalle_Propuesta_Vuelo_Precio,
+        Detalle_Propuesta_Vuelo_Subtotal
+    )
+    SELECT DISTINCT
+        v.Vuelo_Codigo,
+        m.Propuesta_Nro_Propuesta,
+        m.Detalle_Propuesta_Vuelo_Cant_Pasajes,
+        m.Detalle_Propuesta_Vuelo_Precio,
+        m.Detalle_Propuesta_Vuelo_Subtotal
+    FROM gd_esquema.Maestra m
+    INNER JOIN GRUPO_BASES26.Vuelo v
+        ON  v.Aerolinea_Codigo          = m.Aerolinea_Codigo
+        AND v.Aeropuerto_Salida_Codigo  = m.Aeropuerto_Salida_Codigo
+        AND v.Aeropuerto_Llegada_Codigo = m.Aeropuerto_Llegada_Codigo
+        AND v.Vuelo_Fecha_Salida        = m.Vuelo_Fecha_Salida
+    WHERE m.Propuesta_Nro_Propuesta IS NOT NULL
+      AND m.Detalle_Propuesta_Vuelo_Cant_Pasajes IS NOT NULL;
+END
+GO
+
+EXEC GRUPO_BASES26.MigrarDetallePropuestaVuelo
+GO
+
