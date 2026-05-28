@@ -635,20 +635,19 @@ WHERE m.Agente_legajo IS NOT NULL;
 --Hospedaje
 INSERT INTO GRUPO_BASES26.Hospedaje (Hospedaje_Ciudad_Cod, Hospedaje_Pais, Hospedaje_Nombre,
                                      Hospedaje_Direccion, Hospedaje_Incluye_Desayuno, Hospedaje_Check_In, Hospedaje_Check_Out)
-SELECT DISTINCT c.Ciudad_Cod, p.Pais_Cod, m.Hospedaje_Nombre,
+SELECT DISTINCT c.Ciudad_Cod, c.Pais_Cod, m.Hospedaje_Nombre,
                 m.Hospedaje_Direccion, m.Hospedaje_Incluye_Desayuno, m.Hospedaje_Check_In, m.Hospedaje_Check_Out
 FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre = m.Hospedaje_Pais
-INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre= m.Hospedaje_Ciudad AND c.Pais_Cod = p.Pais_Cod
+INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre= m.Hospedaje_Ciudad 
 WHERE m.Hospedaje_Nombre IS NOT NULL;
 --------------------------------------
 --Habitación
 INSERT INTO GRUPO_BASES26.Habitacion (Hospedaje_Codigo, Habitacion_Nombre, Habitacion_Descripcion, Habitacion_Precio_Noche)
 SELECT DISTINCT h.Hospedaje_Codigo, m.Habitacion_Nombre, m.Habitacion_Descripcion, m.Habitacion_Precio_Noche
 FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Pais p ON p.Pais_Nombre= m.Hospedaje_Pais
-INNER JOIN GRUPO_BASES26.Ciudad c ON c.Ciudad_Nombre= m.Hospedaje_Ciudad AND c.Pais_Cod=p.Pais_Cod
-INNER JOIN GRUPO_BASES26.Hospedaje h ON h.Hospedaje_Nombre = m.Hospedaje_Nombre AND h.Hospedaje_Ciudad_Cod=c.Ciudad_Cod
+INNER JOIN GRUPO_BASES26.Hospedaje h 
+    ON h.Hospedaje_Nombre = m.Hospedaje_Nombre
+   AND h.Hospedaje_Direccion = m.Hospedaje_Direccion
 WHERE m.Habitacion_Nombre IS NOT NULL;
 -------------------------------------------
 ---------------------------------------
@@ -859,3 +858,11 @@ GO
 EXEC GRUPO_BASES26.MigrarDetallePropuestaVuelo
 GO
 
+
+-- Detalle Propuesta Hospedaje
+
+INSERT INTO GRUPO_BASES26.DetallePropuestaHospedaje (Detalle_Propuesta_Cod_Propuesta,Detalle_Propuesta_Hospedaje_Cod_Hospedaje,Detalle_Propuesta_Hospedaje_Fecha_Desde,Detalle_Propuesta_Hospedaje_Fecha_Hasta,Detalle_Propuesta_Hospedaje_Cant,Detalle_Propuesta_Hospedaje_Precio,Detalle_Propuesta_Hospedaje_Subtotal)
+SELECT m.Propuesta_Nro_Propuesta,h.Hospedaje_Codigo,m.Detalle_Propuesta_Hospedaje_Fecha_Desde,m.Detalle_Propuesta_Hospedaje_Fecha_Hasta,m.Detalle_Propuesta_Hospedaje_Cant,m.Detalle_Propuesta_Hospedaje_Precio,m.Detalle_Propuesta_Hospedaje_Subtotal 
+FROM gd_esquema.Maestra m
+INNER JOIN GRUPO_BASES26.Hospedaje h ON TRIM(h.Hospedaje_Nombre) = TRIM(m.Hospedaje_Nombre) AND TRIM(h.Hospedaje_Direccion) = TRIM(m.Hospedaje_Direccion)
+WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Detalle_Propuesta_Hospedaje_Fecha_Desde IS NOT NULL;
