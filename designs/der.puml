@@ -220,6 +220,7 @@ entity "DetallePropuestaHospedaje" {
     * det_prop_hosp_id: bigint <<PK>>
     --
     * det_prop_hosp_propuesta: bigint <<FK>>
+    * det_prop_hosp_habitacion: bigint <<FK>>
     * det_prop_hosp_hospedaje: bigint <<FK>>
     * det_prop_hosp_fecha_desde: date
     * det_prop_hosp_fecha_hasta: date
@@ -341,7 +342,7 @@ Venta ||--o| Venta_Propuesta
 Propuesta ||--o|Venta_Propuesta
 
 DetallePropuestaVuelo|o--||Vuelo
-DetallePropuestaHospedaje|o--||Hospedaje
+DetallePropuestaHospedaje|o--||Habitacion
 
 Canal_Venta ||--o{ Venta
 Medio_Pago ||--o{ Venta
