@@ -550,404 +550,821 @@ CREATE INDEX ix_encuesta_venta       ON GRUPO_BASES26.Encuesta                (e
 CREATE INDEX ix_encuesta_propuesta   ON GRUPO_BASES26.Encuesta                (encuesta_propuesta);
 CREATE INDEX ix_encuesta_fecha       ON GRUPO_BASES26.Encuesta                (encuesta_fecha);
 CREATE INDEX ix_calificacion_aspecto ON GRUPO_BASES26.CalificacionPorEncuesta (calificacion_aspecto);
+GO
+--==================================================
+-- Migracion - Stored Procedures
+--==================================================
+
+-- NIVEL 1: Tablas sin dependencias
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Pais(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Pais (pais_nombre)
+            SELECT Aerolinea_Pais FROM gd_esquema.Maestra WHERE Aerolinea_Pais IS NOT NULL
+            UNION
+            SELECT Aeropuerto_Salida_Pais FROM gd_esquema.Maestra WHERE Aeropuerto_Salida_Pais IS NOT NULL
+            UNION
+            SELECT Aeropuerto_Llegada_Pais FROM gd_esquema.Maestra WHERE Aeropuerto_Llegada_Pais IS NOT NULL
+            UNION
+            SELECT Hospedaje_Pais FROM gd_esquema.Maestra WHERE Hospedaje_Pais IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Provincia(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Provincia (provincia_nombre)
+            SELECT Agente_Provincia FROM gd_esquema.Maestra WHERE Agente_Provincia IS NOT NULL
+            UNION
+            SELECT Agencia_Provincia FROM gd_esquema.Maestra WHERE Agencia_Provincia IS NOT NULL
+            UNION
+            SELECT Cliente_Provincia FROM gd_esquema.Maestra WHERE Cliente_Provincia IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Alianza(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Alianza (alianza_nombre)
+            SELECT DISTINCT Aerolinea_Alianza FROM gd_esquema.Maestra WHERE Aerolinea_Alianza IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Estado(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Estado (estado_nombre)
+            SELECT DISTINCT Propuesta_Estado FROM gd_esquema.Maestra WHERE Propuesta_Estado IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_CanalVenta(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Canal_Venta (canal_detalle)
+            SELECT DISTINCT Venta_Canal_Venta FROM gd_esquema.Maestra WHERE Venta_Canal_Venta IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_MedioPago(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Medio_Pago (medio_pago_detalle)
+            SELECT DISTINCT Venta_Medio_Pago FROM gd_esquema.Maestra WHERE Venta_Medio_Pago IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Aspecto(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Aspecto (aspecto_descripcion)
+            SELECT DISTINCT Aspecto_Aspecto FROM gd_esquema.Maestra WHERE Aspecto_Aspecto IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Proveedor(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Proveedor (proveedor_nombre, proveedor_mail, proveedor_telefono)
+            SELECT DISTINCT Proveedor_Nombre, Proveedor_Mail, Proveedor_Telefono
+            FROM gd_esquema.Maestra WHERE Proveedor_Nombre IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 2: Ciudad (->Pais), Localidad (->Provincia)
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Ciudad(@salida int OUTPUT)
+AS
+BEGIN
+    CREATE TABLE #TempCiudadPais (Ciudad_Nombre nvarchar(255), Pais_Nombre nvarchar(255));
+    INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
+    SELECT DISTINCT Aeropuerto_Salida_Ciudad, Aeropuerto_Salida_Pais
+    FROM gd_esquema.Maestra WHERE Aeropuerto_Salida_Ciudad IS NOT NULL AND Aeropuerto_Salida_Pais IS NOT NULL
+    UNION
+    SELECT DISTINCT Aeropuerto_Llegada_Ciudad, Aeropuerto_Llegada_Pais
+    FROM gd_esquema.Maestra WHERE Aeropuerto_Llegada_Ciudad IS NOT NULL AND Aeropuerto_Llegada_Pais IS NOT NULL
+    UNION
+    SELECT DISTINCT Hospedaje_Ciudad, Hospedaje_Pais
+    FROM gd_esquema.Maestra WHERE Hospedaje_Ciudad IS NOT NULL AND Hospedaje_Pais IS NOT NULL;
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Ciudad (ciudad_pais, ciudad_nombre)
+            SELECT DISTINCT p.pais_id, t.Ciudad_Nombre
+            FROM #TempCiudadPais t
+            INNER JOIN GRUPO_BASES26.Pais p ON p.pais_nombre = t.Pais_Nombre;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+    DROP TABLE #TempCiudadPais;
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Localidad(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Localidad (localidad_provincia, localidad_nombre)
+            SELECT DISTINCT p.provincia_id, m.Agente_Localidad
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Agente_Provincia
+            WHERE m.Agente_Localidad IS NOT NULL
+            UNION
+            SELECT DISTINCT p.provincia_id, m.Agencia_Localidad
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Agencia_Provincia
+            WHERE m.Agencia_Localidad IS NOT NULL
+            UNION
+            SELECT DISTINCT p.provincia_id, m.Cliente_Localidad
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Cliente_Provincia
+            WHERE m.Cliente_Localidad IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 3: Agencia (->Localidad), Aerolinea (->Pais,Alianza), Aeropuerto (->Ciudad), Hospedaje (->Ciudad,Pais)
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Agencia(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Agencia (agencia_id, agencia_localidad, agencia_direccion, agencia_telefono, agencia_mail)
+            SELECT DISTINCT m.Agencia_Nro_Agencia, l.localidad_id, m.Agencia_Direccion, m.Agencia_Telefono, m.Agencia_Mail
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Agencia_Provincia
+            INNER JOIN GRUPO_BASES26.Localidad l ON l.localidad_nombre = m.Agencia_Localidad AND l.localidad_provincia = p.provincia_id
+            WHERE m.Agencia_Nro_Agencia IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Aerolinea(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Aerolinea (aerolinea_codigo, aerolinea_nombre, aerolinea_alianza, aerolinea_pais)
+            SELECT DISTINCT m.Aerolinea_Codigo, m.Aerolinea_Nombre, a.alianza_id, p.pais_id
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Alianza a ON a.alianza_nombre = m.Aerolinea_Alianza
+            INNER JOIN GRUPO_BASES26.Pais p ON p.pais_nombre = m.Aerolinea_Pais
+            WHERE m.Aerolinea_Codigo IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Aeropuerto(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Aeropuerto (aeropuerto_codigo, aeropuerto_descripcion, aeropuerto_ciudad)
+            SELECT m.Aeropuerto_Salida_Codigo, m.Aeropuerto_Salida_Descripcion, c.ciudad_id
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Ciudad c ON c.ciudad_nombre = m.Aeropuerto_Salida_Ciudad
+            WHERE m.Aeropuerto_Salida_Codigo IS NOT NULL
+            UNION
+            SELECT m.Aeropuerto_Llegada_Codigo, m.Aeropuerto_Llegada_Descripcion, c.ciudad_id
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Ciudad c ON c.ciudad_nombre = m.Aeropuerto_Llegada_Ciudad
+            WHERE m.Aeropuerto_Llegada_Codigo IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Hospedaje(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Hospedaje (hospedaje_ciudad, hospedaje_pais, hospedaje_nombre,
+                                                  hospedaje_direccion, hospedaje_incluye_desayuno,
+                                                  hospedaje_check_in, hospedaje_check_out)
+            SELECT DISTINCT c.ciudad_id, c.ciudad_pais, m.Hospedaje_Nombre,
+                            m.Hospedaje_Direccion, m.Hospedaje_Incluye_Desayuno,
+                            m.Hospedaje_Check_In, m.Hospedaje_Check_Out
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Pais p ON p.pais_nombre = m.Hospedaje_Pais
+            INNER JOIN GRUPO_BASES26.Ciudad c ON c.ciudad_nombre = m.Hospedaje_Ciudad AND c.ciudad_pais = p.pais_id
+            WHERE m.Hospedaje_Nombre IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 4: Agente, Cliente, Habitacion, Excursion, Vuelo
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Agente(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Agente (agente_legajo, agente_agencia, agente_localidad, agente_nombre,
+                                               agente_apellido, agente_dni, agente_fecha_nac,
+                                               agente_telefono, agente_mail, agente_direccion)
+            SELECT DISTINCT m.Agente_Legajo, m.Agencia_Nro_Agencia, l.localidad_id, m.Agente_Nombre,
+                            m.Agente_Apellido, m.Agente_Dni, m.Agente_Fecha_Nac,
+                            m.Agente_Telefono, m.Agente_Mail, m.Agente_Direccion
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Agente_Provincia
+            INNER JOIN GRUPO_BASES26.Localidad l ON l.localidad_nombre = m.Agente_Localidad AND l.localidad_provincia = p.provincia_id
+            WHERE m.Agente_Legajo IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Cliente(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Cliente (cliente_localidad, cliente_nombre, cliente_apellido,
+                                               cliente_dni, cliente_telefono, cliente_mail,
+                                               cliente_direccion, cliente_fecha_nac)
+            SELECT DISTINCT l.localidad_id, m.Cliente_Nombre, m.Cliente_Apellido,
+                            m.Cliente_Dni, m.Cliente_Tel, m.Cliente_Mail,
+                            m.Cliente_Direccion, m.Cliente_Fecha_Nac
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Cliente_Provincia
+            INNER JOIN GRUPO_BASES26.Localidad l ON l.localidad_nombre = m.Cliente_Localidad AND l.localidad_provincia = p.provincia_id
+            WHERE m.Cliente_Dni IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Habitacion(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Habitacion (habitacion_hospedaje, habitacion_nombre,
+                                                   habitacion_descripcion, habitacion_precio_noche)
+            SELECT DISTINCT h.hospedaje_id, m.Habitacion_Nombre,
+                            m.Habitacion_Descripcion, m.Habitacion_Precio_Noche
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Hospedaje h
+                ON h.hospedaje_nombre = m.Hospedaje_Nombre AND h.hospedaje_direccion = m.Hospedaje_Direccion
+            WHERE m.Habitacion_Nombre IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Excursion(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Excursion (excursion_proveedor, excursion_nombre, excursion_descripcion,
+                                                  excursion_horario, excursion_duracion, excursion_precio)
+            SELECT DISTINCT p.proveedor_id, m.Excursion_Nombre, m.Excursion_Descripcion,
+                            m.Excursion_Horario, m.Excursion_Duracion, m.Excursion_Precio
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Proveedor p ON p.proveedor_nombre = m.Proveedor_Nombre
+            WHERE m.Excursion_Nombre IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Vuelo(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Vuelo (vuelo_aerolinea, vuelo_apto_salida, vuelo_apto_llegada,
+                                              vuelo_fecha_salida, vuelo_hora_salida, vuelo_fecha_llegada,
+                                              vuelo_hora_llegada, vuelo_duracion, vuelo_precio,
+                                              vuelo_incluye_carry, vuelo_incluye_valija)
+            SELECT DISTINCT Aerolinea_Codigo, Aeropuerto_Salida_Codigo, Aeropuerto_Llegada_Codigo,
+                            Vuelo_Fecha_Salida, Vuelo_Horario_Salida, Vuelo_Fecha_Llegada,
+                            Vuelo_Horario_Llegada, Vuelo_Duracion, Vuelo_Precio,
+                            Vuelo_Incluye_Carry, Vuelo_Incluye_Valija
+            FROM gd_esquema.Maestra
+            WHERE Aerolinea_Codigo IS NOT NULL AND Aeropuerto_Salida_Codigo IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 5: SolicitudCotizacion (->Cliente,Agente), Venta (->Agencia,Cliente,Agente,CanalVenta,MedioPago)
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_SolicitudCotizacion(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.SolicitudCotizacion (
+                solicitud_id, solicitud_cliente, solicitud_agente, solicitud_fecha,
+                solicitud_fecha_inicio, solicitud_fecha_fin, solicitud_cant_pax,
+                solicitud_observaciones, solicitud_presupuesto
+            )
+            SELECT DISTINCT
+                m.Solicitud_Nro_Solicitud, c.cliente_id, m.Agente_Legajo,
+                m.Solicitud_Fecha_Solicitud, m.Solicitud_Fecha_Inicio_Tentativa,
+                m.Solicitud_Fecha_Fin_Tentativa, m.Solicitud_Cant_Pax,
+                m.Solicitud_Observaciones, m.Solicitud_Presupuesto_Estimado
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Cliente c
+                ON c.cliente_dni = m.Cliente_Dni AND c.cliente_nombre = m.Cliente_Nombre AND c.cliente_apellido = m.Cliente_Apellido
+            WHERE m.Solicitud_Nro_Solicitud IS NOT NULL AND m.Agente_Legajo IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Venta(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Venta (
+                venta_id, venta_agencia, venta_cliente, venta_agente, venta_canal,
+                venta_medio_pago, venta_fecha, venta_subtotal, venta_descuento, venta_importe_total
+            )
+            SELECT DISTINCT
+                m.Venta_Nro_Venta, m.Agencia_Nro_Agencia, c.cliente_id, m.Agente_Legajo,
+                cv.canal_id, mp.medio_pago_id, m.Venta_Fecha_Venta,
+                m.Venta_Subtotal, m.Venta_Descuento, m.Venta_Importe_Total
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Cliente c
+                ON c.cliente_dni = m.Cliente_Dni AND c.cliente_nombre = m.Cliente_Nombre AND c.cliente_apellido = m.Cliente_Apellido
+            INNER JOIN GRUPO_BASES26.Canal_Venta cv ON cv.canal_detalle = m.Venta_Canal_Venta
+            INNER JOIN GRUPO_BASES26.Medio_Pago mp ON mp.medio_pago_detalle = m.Venta_Medio_Pago
+            WHERE m.Venta_Nro_Venta IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 6: DetalleCiudad (->Ciudad,SolicitudCotizacion), Propuesta (->SolicitudCotizacion,Agente,Estado)
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_DetalleCiudad(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.DetalleCiudad (det_ciudad_ciudad, det_ciudad_solicitud, det_ciudad_cant_dias, det_ciudad_observaciones)
+            SELECT DISTINCT ci.ciudad_id, m.Solicitud_Nro_Solicitud, m.Detalle_Solicitud_Cant_Dias_Aprox, m.Detalle_Solicitud_Observaciones
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Ciudad ci ON ci.ciudad_nombre = m.Detalle_Solicitud_Ciudad
+            WHERE m.Solicitud_Nro_Solicitud IS NOT NULL AND m.Detalle_Solicitud_Ciudad IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Propuesta(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Propuesta (
+                propuesta_id, propuesta_solicitud, propuesta_agente, propuesta_estado,
+                propuesta_fecha_emision, propuesta_vigencia, propuesta_fecha_desde, propuesta_fecha_hasta,
+                propuesta_subtotal, propuesta_descuento, propuesta_importe_total
+            )
+            SELECT DISTINCT
+                m.Propuesta_Nro_Propuesta, m.Solicitud_Nro_Solicitud, m.Agente_Legajo, e.estado_id,
+                m.Propuesta_Fecha_Emision, m.Propuesta_Vigencia_Hasta, m.Propuesta_Fecha_Desde, m.Propuesta_Fecha_Hasta,
+                m.Propuesta_Subtotal, m.Propuesta_Descuento, m.Propuesta_Importe_Total
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Estado e ON e.estado_nombre = m.Propuesta_Estado
+            WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Solicitud_Nro_Solicitud IS NOT NULL AND m.Agente_Legajo IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 7: Detalles de Propuesta y Venta
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_DetallePropuestaVuelo(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.DetallePropuestaVuelo (
+                det_prop_vuelo_vuelo, det_prop_vuelo_propuesta, det_prop_vuelo_cantidad,
+                det_prop_vuelo_precio_unitario, det_prop_vuelo_subtotal
+            )
+            SELECT DISTINCT
+                v.vuelo_id, m.Propuesta_Nro_Propuesta, m.Detalle_Propuesta_Vuelo_Cant_Pasajes,
+                m.Detalle_Propuesta_Vuelo_Precio, m.Detalle_Propuesta_Vuelo_Subtotal
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Vuelo v
+                ON v.vuelo_aerolinea = m.Aerolinea_Codigo AND v.vuelo_apto_salida = m.Aeropuerto_Salida_Codigo
+                AND v.vuelo_apto_llegada = m.Aeropuerto_Llegada_Codigo AND v.vuelo_fecha_salida = m.Vuelo_Fecha_Salida
+            WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Detalle_Propuesta_Vuelo_Cant_Pasajes IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_DetallePropuestaHospedaje(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.DetallePropuestaHospedaje (
+                det_prop_hosp_propuesta, det_prop_hosp_habitacion, det_prop_hosp_hospedaje,
+                det_prop_hosp_fecha_desde, det_prop_hosp_fecha_hasta, det_prop_hosp_cantidad,
+                det_prop_hosp_precio_unitario, det_prop_hosp_subtotal
+            )
+            SELECT DISTINCT m.Propuesta_Nro_Propuesta, hab.habitacion_id, h.hospedaje_id,
+                m.Detalle_Propuesta_Hospedaje_Fecha_Desde, m.Detalle_Propuesta_Hospedaje_Fecha_Hasta,
+                m.Detalle_Propuesta_Hospedaje_Cant, m.Detalle_Propuesta_Hospedaje_Precio, m.Detalle_Propuesta_Hospedaje_Subtotal
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Hospedaje h
+                ON h.hospedaje_nombre = m.Hospedaje_Nombre AND h.hospedaje_direccion = m.Hospedaje_Direccion
+            INNER JOIN GRUPO_BASES26.Habitacion hab
+                ON hab.habitacion_hospedaje = h.hospedaje_id AND hab.habitacion_nombre = m.Habitacion_Nombre
+            WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Detalle_Propuesta_Hospedaje_Fecha_Desde IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_VentaPropuesta(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Venta_Propuesta (venta_prop_venta, venta_prop_propuesta)
+            SELECT DISTINCT m.Venta_Nro_Venta, m.Propuesta_Nro_Propuesta
+            FROM gd_esquema.Maestra m
+            WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Propuesta_Nro_Propuesta IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_DetalleVentaVuelo(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Detalle_Venta_Vuelo (
+                det_vta_vuelo_venta, det_vta_vuelo_vuelo, det_vta_vuelo_cantidad,
+                det_vta_vuelo_precio_unitario, det_vta_vuelo_subtotal, det_vta_vuelo_cod_reserva
+            )
+            SELECT DISTINCT m.Venta_Nro_Venta, v.vuelo_id, m.Detalle_Venta_Vuelo_Cantidad_Pasajes,
+                m.Detalle_Venta_Vuelo_Precio_Unitario, m.Detalle_Venta_Vuelo_Subtotal, m.Detalle_Venta_Vuelo_Cod_Reserva
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Vuelo v
+                ON v.vuelo_aerolinea = m.Aerolinea_Codigo AND v.vuelo_apto_salida = m.Aeropuerto_Salida_Codigo
+                AND v.vuelo_apto_llegada = m.Aeropuerto_Llegada_Codigo AND v.vuelo_fecha_salida = m.Vuelo_Fecha_Salida
+            WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Detalle_Venta_Vuelo_Cantidad_Pasajes IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_DetalleVentaHospedaje(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Detalle_Venta_Hospedaje (
+                det_vta_hosp_venta, det_vta_hosp_habitacion, det_vta_hosp_hospedaje,
+                det_vta_hosp_fecha_desde, det_vta_hosp_fecha_hasta, det_vta_hosp_cantidad,
+                det_vta_hosp_precio_unitario, det_vta_hosp_subtotal, det_vta_hosp_cod_reserva
+            )
+            SELECT Venta_Nro_Venta, habitacion_id, hospedaje_id,
+                Detalle_Venta_Hospedaje_Fecha_Desde, Detalle_Venta_Hospedaje_Fecha_Hasta,
+                Detalle_Venta_Hospedaje_Cantidad, Detalle_Venta_Hospedaje_Precio_Unitario,
+                Detalle_Venta_Hospedaje_Subtotal, Detalle_Venta_Hospedaje_Cod_Reserva
+            FROM (
+                SELECT m.Venta_Nro_Venta, hab.habitacion_id, h.hospedaje_id,
+                    m.Detalle_Venta_Hospedaje_Fecha_Desde, m.Detalle_Venta_Hospedaje_Fecha_Hasta,
+                    m.Detalle_Venta_Hospedaje_Cantidad, m.Detalle_Venta_Hospedaje_Precio_Unitario,
+                    m.Detalle_Venta_Hospedaje_Subtotal, m.Detalle_Venta_Hospedaje_Cod_Reserva,
+                    ROW_NUMBER() OVER (PARTITION BY m.Venta_Nro_Venta, hab.habitacion_id, h.hospedaje_id ORDER BY (SELECT NULL)) AS rn
+                FROM gd_esquema.Maestra m
+                INNER JOIN GRUPO_BASES26.Hospedaje h
+                    ON h.hospedaje_nombre = m.Hospedaje_Nombre AND h.hospedaje_direccion = m.Hospedaje_Direccion
+                INNER JOIN GRUPO_BASES26.Habitacion hab
+                    ON hab.habitacion_hospedaje = h.hospedaje_id AND hab.habitacion_nombre = m.Habitacion_Nombre
+                WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Detalle_Venta_Hospedaje_Fecha_Desde IS NOT NULL
+            ) sub
+            WHERE rn = 1;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_DetalleVentaExcursion(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Detalle_Venta_Excursion (
+                det_vta_excur_excursion, det_vta_excur_venta, det_vta_excur_fecha_reserva,
+                det_vta_excur_cantidad, det_vta_excur_precio_unitario,
+                det_vta_excur_subtotal, det_vta_excur_cod_reserva
+            )
+            SELECT excursion_id, Venta_Nro_Venta, Detalle_Venta_Excursion_Fecha_Reserva,
+                Detalle_Venta_Excursion_Cant, Detalle_Venta_Excursion_Precio_Unitario,
+                Detalle_Venta_Excursion_Subtotal, Detalle_Venta_Excursion_Cod_Reserva
+            FROM (
+                SELECT e.excursion_id, m.Venta_Nro_Venta, m.Detalle_Venta_Excursion_Fecha_Reserva,
+                    m.Detalle_Venta_Excursion_Cant, m.Detalle_Venta_Excursion_Precio_Unitario,
+                    m.Detalle_Venta_Excursion_Subtotal, m.Detalle_Venta_Excursion_Cod_Reserva,
+                    ROW_NUMBER() OVER (PARTITION BY e.excursion_id, m.Venta_Nro_Venta ORDER BY (SELECT NULL)) AS rn
+                FROM gd_esquema.Maestra m
+                INNER JOIN GRUPO_BASES26.Excursion e ON e.excursion_nombre = m.Excursion_Nombre
+                WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Excursion_Nombre IS NOT NULL
+            ) sub
+            WHERE rn = 1;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 8: Encuesta (->Cliente,Agente,Venta,Propuesta)
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Encuesta(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.Encuesta (
+                encuesta_id, encuesta_cliente, encuesta_agente, encuesta_venta,
+                encuesta_propuesta, encuesta_fecha, encuesta_comentarios
+            )
+            SELECT DISTINCT m.Encuesta_Codigo_Encuesta, c.cliente_id, m.Agente_Legajo,
+                m.Venta_Nro_Venta, m.Propuesta_Nro_Propuesta, m.Encuesta_Fecha_Encuesta, m.Encuesta_Comentarios
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Cliente c
+                ON c.cliente_dni = m.Cliente_Dni AND c.cliente_nombre = m.Cliente_Nombre AND c.cliente_apellido = m.Cliente_Apellido
+            WHERE m.Encuesta_Codigo_Encuesta IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
+
+-- NIVEL 9: CalificacionPorEncuesta (->Encuesta,Aspecto)
+
+CREATE PROCEDURE GRUPO_BASES26.Migrar_CalificacionPorEncuesta(@salida int OUTPUT)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            INSERT INTO GRUPO_BASES26.CalificacionPorEncuesta (calificacion_encuesta, calificacion_aspecto, calificacion_valor)
+            SELECT DISTINCT m.Encuesta_Codigo_Encuesta, a.aspecto_id, m.Detalle_Encuesta_Puntaje
+            FROM gd_esquema.Maestra m
+            INNER JOIN GRUPO_BASES26.Aspecto a ON a.aspecto_descripcion = m.Aspecto_Aspecto
+            WHERE m.Encuesta_Codigo_Encuesta IS NOT NULL AND m.Aspecto_Aspecto IS NOT NULL;
+            SET @salida = @@ROWCOUNT
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        SET @salida = -1
+    END CATCH
+END
+GO
 
 --==================================================
---Migracion
+-- Ejecucion de migraciones en orden de dependencia
 --==================================================
 
+DECLARE @resultado int
 
-INSERT INTO GRUPO_BASES26.Provincia (provincia_nombre)
-SELECT m.Agente_Provincia FROM gd_esquema.Maestra m WHERE m.Agente_Provincia is not null
-UNION
-SELECT m.Agencia_Provincia FROM gd_esquema.Maestra m WHERE m.Agencia_Provincia is not null
-UNION
-SELECT m.Cliente_Provincia FROM gd_esquema.Maestra m WHERE m.Cliente_Provincia is not null;
+-- Nivel 1
+EXEC GRUPO_BASES26.Migrar_Pais @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Pais - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Provincia @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Provincia - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Alianza @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Alianza - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Estado @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Estado - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_CanalVenta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_CanalVenta - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_MedioPago @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_MedioPago - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Aspecto @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Aspecto - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Proveedor @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Proveedor - Filas insertadas';
 
-------------------------------------
+-- Nivel 2
+EXEC GRUPO_BASES26.Migrar_Ciudad @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Ciudad - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Localidad @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Localidad - Filas insertadas';
 
-INSERT INTO GRUPO_BASES26.Localidad (localidad_provincia, localidad_nombre)
-SELECT p.provincia_id, ap.Agente_Localidad
-FROM GRUPO_BASES26.Provincia p
-INNER JOIN (SELECT Agente_Provincia, Agente_Localidad FROM gd_esquema.Maestra) ap ON ap.Agente_Provincia = p.provincia_nombre
-UNION
-SELECT p.provincia_id, ap.Agencia_Localidad
-FROM GRUPO_BASES26.Provincia p
-INNER JOIN (SELECT Agencia_Provincia, Agencia_Localidad FROM gd_esquema.Maestra) ap ON ap.Agencia_Provincia = p.provincia_nombre
-UNION
-SELECT p.provincia_id, ap.Cliente_Localidad
-FROM GRUPO_BASES26.Provincia p
-INNER JOIN (SELECT Cliente_Provincia, Cliente_Localidad FROM gd_esquema.Maestra) ap ON ap.Cliente_Provincia = p.provincia_nombre;
+-- Nivel 3
+EXEC GRUPO_BASES26.Migrar_Agencia @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Agencia - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Aerolinea @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Aerolinea - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Aeropuerto @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Aeropuerto - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Hospedaje @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Hospedaje - Filas insertadas';
 
------------------------------------
+-- Nivel 4
+EXEC GRUPO_BASES26.Migrar_Agente @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Agente - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Cliente @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Cliente - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Habitacion @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Habitacion - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Excursion @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Excursion - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Vuelo @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Vuelo - Filas insertadas';
 
-INSERT INTO GRUPO_BASES26.Agencia (agencia_id, agencia_localidad, agencia_direccion, agencia_telefono, agencia_mail)
-SELECT DISTINCT(m.Agencia_Nro_Agencia), r.localidad_id, m.Agencia_Direccion, m.Agencia_Telefono, m.Agencia_Mail
-FROM gd_esquema.Maestra m
-INNER JOIN (
-		SELECT l.localidad_id, l.localidad_nombre, p.provincia_nombre
-		FROM GRUPO_BASES26.Localidad l
-		INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_id = l.localidad_provincia
-	) r ON m.Agencia_Localidad = r.localidad_nombre AND m.Agencia_Provincia = r.provincia_nombre
+-- Nivel 5
+EXEC GRUPO_BASES26.Migrar_SolicitudCotizacion @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_SolicitudCotizacion - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Venta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Venta - Filas insertadas';
 
-----------------------------------
--- paises
+-- Nivel 6
+EXEC GRUPO_BASES26.Migrar_DetalleCiudad @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_DetalleCiudad - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_Propuesta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Propuesta - Filas insertadas';
 
-INSERT INTO GRUPO_BASES26.Pais (pais_nombre)
-SELECT Aerolinea_Pais FROM gd_esquema.Maestra WHERE Aerolinea_Pais IS NOT NULL
-UNION
-SELECT Aeropuerto_Salida_Pais FROM gd_esquema.Maestra WHERE Aeropuerto_Salida_Pais IS NOT NULL
-UNION
-SELECT Aeropuerto_Llegada_Pais FROM gd_esquema.Maestra WHERE Aeropuerto_Llegada_Pais IS NOT NULL
-UNION
-SELECT Hospedaje_Pais FROM gd_esquema.Maestra WHERE Hospedaje_Pais IS NOT NULL
-ORDER BY 1;
+-- Nivel 7
+EXEC GRUPO_BASES26.Migrar_DetallePropuestaVuelo @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_DetallePropuestaVuelo - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_DetallePropuestaHospedaje @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_DetallePropuestaHospedaje - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_VentaPropuesta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_VentaPropuesta - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_DetalleVentaVuelo @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_DetalleVentaVuelo - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_DetalleVentaHospedaje @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_DetalleVentaHospedaje - Filas insertadas';
+EXEC GRUPO_BASES26.Migrar_DetalleVentaExcursion @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_DetalleVentaExcursion - Filas insertadas';
 
----------------------------------
--- ciudad
+-- Nivel 8
+EXEC GRUPO_BASES26.Migrar_Encuesta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_Encuesta - Filas insertadas';
 
-CREATE TABLE #TempCiudadPais (
-    Ciudad_Nombre nvarchar(255),
-    Pais_Nombre nvarchar(255)
-);
-INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
-SELECT DISTINCT Aeropuerto_Llegada_Ciudad, Aeropuerto_Llegada_Pais
-FROM gd_esquema.Maestra WHERE Aeropuerto_Llegada_Ciudad is not null AND Aeropuerto_Llegada_Pais is not null
-UNION
-SELECT DISTINCT Aeropuerto_Salida_Ciudad, Aeropuerto_Salida_Pais
-FROM gd_esquema.Maestra WHERE Aeropuerto_Salida_Ciudad is not null AND Aeropuerto_Salida_Pais is not null
-UNION
-SELECT DISTINCT Hospedaje_Ciudad, Hospedaje_Pais
-FROM gd_esquema.Maestra WHERE Hospedaje_Ciudad is not null AND Hospedaje_Pais is not null
-
-INSERT INTO GRUPO_BASES26.Ciudad (ciudad_pais, ciudad_nombre)
-SELECT DISTINCT P.pais_id, T.Ciudad_Nombre
-FROM #TempCiudadPais T
-INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.pais_nombre;
-
-DROP TABLE #TempCiudadPais;
-
----------------------------------------
--- Canal de venta
-
-INSERT INTO GRUPO_BASES26.Canal_Venta (canal_detalle)
-SELECT Venta_Canal_Venta FROM gd_esquema.Maestra WHERE Venta_canal_venta is not null GROUP BY Venta_Canal_Venta ORDER BY Venta_Canal_Venta asc
-
----------------------------------
--- Alianza
-
-INSERT INTO GRUPO_BASES26.Alianza (alianza_nombre)
-SELECT Aerolinea_Alianza FROM gd_esquema.Maestra WHERE Aerolinea_Alianza is not null GROUP BY Aerolinea_Alianza ORDER BY Aerolinea_Alianza asc
-
---------------------------------
--- Medio de pago
-
-INSERT INTO GRUPO_BASES26.Medio_Pago (medio_pago_detalle)
-SELECT Venta_Medio_Pago FROM gd_esquema.Maestra WHERE Venta_Medio_Pago is not null GROUP BY Venta_Medio_Pago ORDER BY Venta_Medio_Pago asc
-
--------------------------------
--- Aspecto
-
-INSERT INTO GRUPO_BASES26.Aspecto (aspecto_descripcion)
-SELECT Aspecto_Aspecto FROM gd_esquema.Maestra WHERE Aspecto_Aspecto is not null GROUP BY Aspecto_Aspecto ORDER BY Aspecto_Aspecto asc
-
--------------------------------
--- Estado
-
-INSERT INTO GRUPO_BASES26.Estado (estado_nombre)
-SELECT Propuesta_Estado FROM gd_esquema.Maestra WHERE Propuesta_Estado is not null GROUP BY Propuesta_Estado ORDER BY Propuesta_Estado asc
-
--------------------------------
--- Proveedor
-
-INSERT INTO GRUPO_BASES26.Proveedor (proveedor_mail, proveedor_nombre, proveedor_telefono)
-SELECT DISTINCT Proveedor_Mail, Proveedor_Nombre, Proveedor_Telefono FROM gd_esquema.Maestra WHERE Proveedor_Nombre IS NOT NULL;
-
---------------------------------
--- Agente
-
-INSERT INTO GRUPO_BASES26.Agente (agente_legajo, agente_agencia, agente_localidad, agente_nombre, agente_apellido,
-                                  agente_dni, agente_fecha_nac, agente_telefono, agente_mail, agente_direccion)
-SELECT DISTINCT m.Agente_Legajo, m.Agencia_Nro_Agencia, l.localidad_id, m.Agente_Nombre, m.Agente_Apellido,
-                m.Agente_Dni, m.Agente_Fecha_Nac, m.Agente_Telefono, m.Agente_Mail, m.Agente_Direccion
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Provincia p ON p.provincia_nombre = m.Agente_Provincia
-INNER JOIN GRUPO_BASES26.Localidad l ON l.localidad_nombre = m.Agente_Localidad AND l.localidad_provincia = p.provincia_id
-WHERE m.Agente_legajo IS NOT NULL;
-
---------------------------------------
--- Hospedaje
-
-INSERT INTO GRUPO_BASES26.Hospedaje (hospedaje_ciudad, hospedaje_pais, hospedaje_nombre,
-                                     hospedaje_direccion, hospedaje_incluye_desayuno, hospedaje_check_in, hospedaje_check_out)
-SELECT DISTINCT c.ciudad_id, c.ciudad_pais, m.Hospedaje_Nombre,
-                m.Hospedaje_Direccion, m.Hospedaje_Incluye_Desayuno, m.Hospedaje_Check_In, m.Hospedaje_Check_Out
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Pais p ON p.pais_nombre = m.Hospedaje_Pais
-INNER JOIN GRUPO_BASES26.Ciudad c ON c.ciudad_nombre = m.Hospedaje_Ciudad AND c.ciudad_pais = p.pais_id
-WHERE m.Hospedaje_Nombre IS NOT NULL;
-
---------------------------------------
--- Habitacion
-
-INSERT INTO GRUPO_BASES26.Habitacion (habitacion_hospedaje, habitacion_nombre, habitacion_descripcion, habitacion_precio_noche)
-SELECT DISTINCT h.hospedaje_id, m.Habitacion_Nombre, m.Habitacion_Descripcion, m.Habitacion_Precio_Noche
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Hospedaje h ON h.hospedaje_nombre = m.Hospedaje_Nombre AND h.hospedaje_direccion = m.Hospedaje_Direccion
-WHERE m.Habitacion_Nombre IS NOT NULL;
-
----------------------------------------
--- Aeropuerto
-
-INSERT INTO GRUPO_BASES26.Aeropuerto (aeropuerto_codigo, aeropuerto_descripcion, aeropuerto_ciudad)
-SELECT m.Aeropuerto_Salida_Codigo, m.Aeropuerto_Salida_Descripcion, c.ciudad_id
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Ciudad c ON c.ciudad_nombre = m.Aeropuerto_Salida_Ciudad
-UNION
-SELECT m.Aeropuerto_Llegada_Codigo, m.Aeropuerto_Llegada_Descripcion, c.ciudad_id
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Ciudad c ON c.ciudad_nombre = m.Aeropuerto_Llegada_Ciudad;
-
--------------------------------------------
--- Aerolinea
-
-INSERT INTO GRUPO_BASES26.Aerolinea (aerolinea_codigo, aerolinea_nombre, aerolinea_alianza, aerolinea_pais)
-SELECT DISTINCT m.Aerolinea_Codigo, m.Aerolinea_Nombre, a.alianza_id, p.pais_id
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Alianza a ON a.alianza_nombre = m.Aerolinea_Alianza
-INNER JOIN GRUPO_BASES26.Pais p ON p.pais_nombre = m.Aerolinea_Pais;
-
--------------------------------------------
--- Cliente
-
-INSERT INTO GRUPO_BASES26.Cliente (cliente_localidad, cliente_nombre, cliente_apellido, cliente_dni, cliente_telefono, cliente_mail, cliente_direccion, cliente_fecha_nac)
-SELECT DISTINCT l.localidad_id, m.Cliente_Nombre, m.Cliente_Apellido, m.Cliente_Dni, m.Cliente_Tel, m.Cliente_Mail, m.Cliente_Direccion, m.Cliente_Fecha_Nac
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Provincia p ON m.Cliente_Provincia = p.provincia_nombre
-INNER JOIN GRUPO_BASES26.Localidad l ON m.Cliente_Localidad = l.localidad_nombre AND l.localidad_provincia = p.provincia_id
-WHERE m.Cliente_Dni is not null;
-
--------------------------------------------
--- Vuelo
-
-INSERT INTO GRUPO_BASES26.Vuelo (vuelo_aerolinea, vuelo_apto_salida, vuelo_apto_llegada, vuelo_fecha_salida, vuelo_hora_salida, vuelo_fecha_llegada, vuelo_hora_llegada, vuelo_duracion, vuelo_precio, vuelo_incluye_carry, vuelo_incluye_valija)
-SELECT DISTINCT Aerolinea_Codigo, Aeropuerto_Salida_Codigo, Aeropuerto_Llegada_Codigo, Vuelo_Fecha_Salida, Vuelo_Horario_Salida, Vuelo_Fecha_Llegada, Vuelo_Horario_Llegada, Vuelo_Duracion, Vuelo_Precio, Vuelo_Incluye_Carry, Vuelo_Incluye_Valija
-FROM gd_esquema.Maestra
-WHERE Aerolinea_Codigo IS NOT NULL AND Aeropuerto_Salida_Codigo IS NOT NULL;
-
--------------------------------------------
--- Excursion
-
-INSERT INTO GRUPO_BASES26.Excursion (excursion_proveedor, excursion_nombre, excursion_descripcion, excursion_horario, excursion_duracion, excursion_precio)
-SELECT DISTINCT p.proveedor_id, m.Excursion_Nombre, m.Excursion_Descripcion, m.Excursion_Horario, m.Excursion_Duracion, m.Excursion_Precio
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Proveedor p ON p.proveedor_nombre = m.Proveedor_Nombre
-WHERE m.Excursion_Nombre IS NOT NULL;
-GO
-
--------------------------------------------
--- SolicitudCotizacion
-
-CREATE PROCEDURE GRUPO_BASES26.MigrarSolicitudCotizacion
-AS
-BEGIN
-    INSERT INTO GRUPO_BASES26.SolicitudCotizacion (
-        solicitud_id, solicitud_cliente, solicitud_agente, solicitud_fecha,
-        solicitud_fecha_inicio, solicitud_fecha_fin, solicitud_cant_pax,
-        solicitud_observaciones, solicitud_presupuesto
-    )
-    SELECT DISTINCT
-        m.Solicitud_Nro_Solicitud, c.cliente_id, m.Agente_Legajo,
-        m.Solicitud_Fecha_Solicitud, m.Solicitud_Fecha_Inicio_Tentativa,
-        m.Solicitud_Fecha_Fin_Tentativa, m.Solicitud_Cant_Pax,
-        m.Solicitud_Observaciones, m.Solicitud_Presupuesto_Estimado
-    FROM gd_esquema.Maestra m
-    INNER JOIN GRUPO_BASES26.Cliente c
-        ON c.cliente_dni = m.Cliente_Dni AND c.cliente_nombre = m.Cliente_Nombre AND c.cliente_apellido = m.Cliente_Apellido
-    WHERE m.Solicitud_Nro_Solicitud IS NOT NULL AND m.Agente_Legajo IS NOT NULL;
-END
-GO
-EXEC GRUPO_BASES26.MigrarSolicitudCotizacion
-GO
-
--------------------------------------------
--- DetalleCiudad
-
-CREATE PROCEDURE GRUPO_BASES26.MigrarDetalleCiudad
-AS
-BEGIN
-    INSERT INTO GRUPO_BASES26.DetalleCiudad (det_ciudad_ciudad, det_ciudad_solicitud, det_ciudad_cant_dias, det_ciudad_observaciones)
-    SELECT DISTINCT ci.ciudad_id, m.Solicitud_Nro_Solicitud, m.Detalle_Solicitud_Cant_Dias_Aprox, m.Detalle_Solicitud_Observaciones
-    FROM gd_esquema.Maestra m
-    INNER JOIN GRUPO_BASES26.Ciudad ci ON ci.ciudad_nombre = m.Detalle_Solicitud_Ciudad
-    WHERE m.Solicitud_Nro_Solicitud IS NOT NULL AND m.Detalle_Solicitud_Ciudad IS NOT NULL;
-END
-GO
-EXEC GRUPO_BASES26.MigrarDetalleCiudad
-GO
-
--------------------------------------------
--- Propuesta
-
-CREATE PROCEDURE GRUPO_BASES26.MigrarPropuesta
-AS
-BEGIN
-    INSERT INTO GRUPO_BASES26.Propuesta (
-        propuesta_id, propuesta_solicitud, propuesta_agente, propuesta_estado,
-        propuesta_fecha_emision, propuesta_vigencia, propuesta_fecha_desde, propuesta_fecha_hasta,
-        propuesta_subtotal, propuesta_descuento, propuesta_importe_total
-    )
-    SELECT DISTINCT
-        m.Propuesta_Nro_Propuesta, m.Solicitud_Nro_Solicitud, m.Agente_Legajo, e.estado_id,
-        m.Propuesta_Fecha_Emision, m.Propuesta_Vigencia_Hasta, m.Propuesta_Fecha_Desde, m.Propuesta_Fecha_Hasta,
-        m.Propuesta_Subtotal, m.Propuesta_Descuento, m.Propuesta_Importe_Total
-    FROM gd_esquema.Maestra m
-    INNER JOIN GRUPO_BASES26.Estado e ON e.estado_nombre = m.Propuesta_Estado
-    WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Solicitud_Nro_Solicitud IS NOT NULL AND m.Agente_Legajo IS NOT NULL;
-END
-GO
-EXEC GRUPO_BASES26.MigrarPropuesta
-GO
-
--------------------------------------------
--- DetallePropuestaVuelo
-
-CREATE PROCEDURE GRUPO_BASES26.MigrarDetallePropuestaVuelo
-AS
-BEGIN
-    INSERT INTO GRUPO_BASES26.DetallePropuestaVuelo (
-        det_prop_vuelo_vuelo, det_prop_vuelo_propuesta, det_prop_vuelo_cantidad,
-        det_prop_vuelo_precio_unitario, det_prop_vuelo_subtotal
-    )
-    SELECT DISTINCT
-        v.vuelo_id, m.Propuesta_Nro_Propuesta, m.Detalle_Propuesta_Vuelo_Cant_Pasajes,
-        m.Detalle_Propuesta_Vuelo_Precio, m.Detalle_Propuesta_Vuelo_Subtotal
-    FROM gd_esquema.Maestra m
-    INNER JOIN GRUPO_BASES26.Vuelo v
-        ON v.vuelo_aerolinea = m.Aerolinea_Codigo AND v.vuelo_apto_salida = m.Aeropuerto_Salida_Codigo
-        AND v.vuelo_apto_llegada = m.Aeropuerto_Llegada_Codigo AND v.vuelo_fecha_salida = m.Vuelo_Fecha_Salida
-    WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Detalle_Propuesta_Vuelo_Cant_Pasajes IS NOT NULL;
-END
-GO
-EXEC GRUPO_BASES26.MigrarDetallePropuestaVuelo
-GO
-
--------------------------------------------
--- DetallePropuestaHospedaje
-INSERT INTO GRUPO_BASES26.DetallePropuestaHospedaje (
-    det_prop_hosp_propuesta, det_prop_hosp_habitacion, det_prop_hosp_hospedaje, det_prop_hosp_fecha_desde,
-    det_prop_hosp_fecha_hasta, det_prop_hosp_cantidad, det_prop_hosp_precio_unitario, det_prop_hosp_subtotal
-)
-SELECT DISTINCT m.Propuesta_Nro_Propuesta, hab.habitacion_id, h.hospedaje_id,
-    m.Detalle_Propuesta_Hospedaje_Fecha_Desde, m.Detalle_Propuesta_Hospedaje_Fecha_Hasta,
-    m.Detalle_Propuesta_Hospedaje_Cant, m.Detalle_Propuesta_Hospedaje_Precio, m.Detalle_Propuesta_Hospedaje_Subtotal
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Hospedaje h
-    ON h.hospedaje_nombre = m.Hospedaje_Nombre AND h.hospedaje_direccion = m.Hospedaje_Direccion
-INNER JOIN GRUPO_BASES26.Habitacion hab
-    ON hab.habitacion_hospedaje = h.hospedaje_id AND hab.habitacion_nombre = m.Habitacion_Nombre
-WHERE m.Propuesta_Nro_Propuesta IS NOT NULL AND m.Detalle_Propuesta_Hospedaje_Fecha_Desde IS NOT NULL;
-GO
--------------------------------------------
--- Venta
-
-CREATE PROCEDURE GRUPO_BASES26.MigrarVenta
-AS
-BEGIN
-    INSERT INTO GRUPO_BASES26.Venta (
-        venta_id, venta_agencia, venta_cliente, venta_agente, venta_canal,
-        venta_medio_pago, venta_fecha, venta_subtotal, venta_descuento, venta_importe_total
-    )
-    SELECT DISTINCT
-        m.Venta_Nro_Venta, m.Agencia_Nro_Agencia, c.cliente_id, m.Agente_Legajo,
-        cv.canal_id, mp.medio_pago_id, m.Venta_Fecha_Venta,
-        m.Venta_Subtotal, m.Venta_Descuento, m.Venta_Importe_Total
-    FROM gd_esquema.Maestra m
-    INNER JOIN GRUPO_BASES26.Cliente c
-        ON c.cliente_dni = m.Cliente_Dni AND c.cliente_nombre = m.Cliente_Nombre AND c.cliente_apellido = m.Cliente_Apellido
-    INNER JOIN GRUPO_BASES26.Canal_Venta cv ON cv.canal_detalle = m.Venta_Canal_Venta
-    INNER JOIN GRUPO_BASES26.Medio_Pago mp ON mp.medio_pago_detalle = m.Venta_Medio_Pago
-    WHERE m.Venta_Nro_Venta IS NOT NULL;
-END
-GO
-EXEC GRUPO_BASES26.MigrarVenta
-GO
-
--------------------------------------------
--- Venta_Propuesta
-
-INSERT INTO GRUPO_BASES26.Venta_Propuesta (venta_prop_venta, venta_prop_propuesta)
-SELECT DISTINCT m.Venta_Nro_Venta, m.Propuesta_Nro_Propuesta
-FROM gd_esquema.Maestra m
-WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Propuesta_Nro_Propuesta IS NOT NULL;
-
--------------------------------------------
--- Detalle_Venta_Vuelo
-
-INSERT INTO GRUPO_BASES26.Detalle_Venta_Vuelo (
-    det_vta_vuelo_venta, det_vta_vuelo_vuelo, det_vta_vuelo_cantidad,
-    det_vta_vuelo_precio_unitario, det_vta_vuelo_subtotal, det_vta_vuelo_cod_reserva
-)
-SELECT DISTINCT m.Venta_Nro_Venta, v.vuelo_id, m.Detalle_Venta_Vuelo_Cantidad_Pasajes,
-    m.Detalle_Venta_Vuelo_Precio, m.Detalle_Venta_Vuelo_Subtotal, m.Detalle_Venta_Vuelo_Cod_Reserva
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Vuelo v
-    ON v.vuelo_aerolinea = m.Aerolinea_Codigo AND v.vuelo_apto_salida = m.Aeropuerto_Salida_Codigo
-    AND v.vuelo_apto_llegada = m.Aeropuerto_Llegada_Codigo AND v.vuelo_fecha_salida = m.Vuelo_Fecha_Salida
-WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Detalle_Venta_Vuelo_Cantidad_Pasajes IS NOT NULL;
-
-
--------------------------------------------
--- Detalle_Venta_Hospedaje
-
-INSERT INTO GRUPO_BASES26.Detalle_Venta_Hospedaje (
-    det_vta_hosp_venta, det_vta_hosp_habitacion, det_vta_hosp_hospedaje,
-    det_vta_hosp_fecha_desde, det_vta_hosp_fecha_hasta, det_vta_hosp_cantidad,
-    det_vta_hosp_precio_unitario, det_vta_hosp_subtotal, det_vta_hosp_cod_reserva
-)
-SELECT DISTINCT m.Venta_Nro_Venta, hab.habitacion_id, h.hospedaje_id,
-    m.Detalle_Venta_Hospedaje_Fecha_Desde, m.Detalle_Venta_Hospedaje_Fecha_Hasta,
-    m.Detalle_Venta_Hospedaje_Cant, m.Detalle_Venta_Hospedaje_Precio,
-    m.Detalle_Venta_Hospedaje_Subtotal, m.Detalle_Venta_Hospedaje_Cod_Reserva
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Hospedaje h
-    ON h.hospedaje_nombre = m.Hospedaje_Nombre AND h.hospedaje_direccion = m.Hospedaje_Direccion
-INNER JOIN GRUPO_BASES26.Habitacion hab
-    ON hab.habitacion_hospedaje = h.hospedaje_id AND hab.habitacion_nombre = m.Habitacion_Nombre
-WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Detalle_Venta_Hospedaje_Fecha_Desde IS NOT NULL;
-
--------------------------------------------
--- Detalle_Venta_Excursion
-
-INSERT INTO GRUPO_BASES26.Detalle_Venta_Excursion (
-    det_vta_excur_excursion, det_vta_excur_venta, det_vta_excur_fecha_reserva,
-    det_vta_excur_cantidad, det_vta_excur_precio_unitario, det_vta_excur_subtotal, det_vta_excur_cod_reserva
-)
-SELECT DISTINCT e.excursion_id, m.Venta_Nro_Venta, m.Detalle_Venta_Excursion_Fecha_Reserva,
-    m.Detalle_Venta_Excursion_Cant, m.Detalle_Venta_Excursion_Precio,
-    m.Detalle_Venta_Excursion_Subtotal, m.Detalle_Venta_Excursion_Cod_Reserva
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Excursion e ON e.excursion_nombre = m.Excursion_Nombre
-WHERE m.Venta_Nro_Venta IS NOT NULL AND m.Excursion_Nombre IS NOT NULL;
-
--------------------------------------------
--- Encuesta
-
-INSERT INTO GRUPO_BASES26.Encuesta (
-    encuesta_id, encuesta_cliente, encuesta_agente, encuesta_venta,
-    encuesta_propuesta, encuesta_fecha, encuesta_comentarios
-)
-SELECT DISTINCT m.Encuesta_Codigo_Encuesta, c.cliente_id, m.Agente_Legajo,
-    m.Venta_Nro_Venta, m.Propuesta_Nro_Propuesta, m.Encuesta_Fecha_Encuesta, m.Encuesta_Comentarios
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Cliente c
-    ON c.cliente_dni = m.Cliente_Dni AND c.cliente_nombre = m.Cliente_Nombre AND c.cliente_apellido = m.Cliente_Apellido
-WHERE m.Encuesta_Codigo_Encuesta IS NOT NULL;
-
--------------------------------------------
--- CalificacionPorEncuesta
-
-INSERT INTO GRUPO_BASES26.CalificacionPorEncuesta (calificacion_encuesta, calificacion_aspecto, calificacion_valor)
-SELECT DISTINCT m.Encuesta_Codigo_Encuesta, a.aspecto_id, m.Detalle_Encuesta_Puntaje
-FROM gd_esquema.Maestra m
-INNER JOIN GRUPO_BASES26.Aspecto a ON a.aspecto_descripcion = m.Aspecto_Aspecto
-WHERE m.Encuesta_Codigo_Encuesta IS NOT NULL AND m.Aspecto_Aspecto IS NOT NULL;
+-- Nivel 9
+EXEC GRUPO_BASES26.Migrar_CalificacionPorEncuesta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_CalificacionPorEncuesta - Filas insertadas';

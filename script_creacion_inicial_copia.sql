@@ -1,7 +1,7 @@
 USE GD1C2026
 GO
 
-CREATE SCHEMA [GRUPO_BASES26a]
+CREATE SCHEMA [GRUPO_BASES26]
     GO
 
 ----------------------------
@@ -550,7 +550,7 @@ CREATE INDEX ix_encuesta_venta       ON GRUPO_BASES26.Encuesta                (e
 CREATE INDEX ix_encuesta_propuesta   ON GRUPO_BASES26.Encuesta                (encuesta_propuesta);
 CREATE INDEX ix_encuesta_fecha       ON GRUPO_BASES26.Encuesta                (encuesta_fecha);
 CREATE INDEX ix_calificacion_aspecto ON GRUPO_BASES26.CalificacionPorEncuesta (calificacion_aspecto);
-
+GO
 --==================================================
 --Migracion
 --==================================================
@@ -786,7 +786,7 @@ GO
 --EXEC GRUPO_BASES26.Migrar_Proveedor 8
 --------------------------------
 -- Agente
-CREATE PROCEDURE GRUPO_BASES26.Migrar_Agente 17
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Agente
 AS
 BEGIN
     BEGIN TRY
