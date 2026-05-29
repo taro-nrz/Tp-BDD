@@ -479,48 +479,31 @@ ALTER TABLE GRUPO_BASES26.CalificacionPorEncuesta
 -- Indices
 --==================================================
 
--- Geografía
 CREATE INDEX ix_ciudad_pais          ON GRUPO_BASES26.Ciudad     (ciudad_pais);
 CREATE INDEX ix_localidad_provincia  ON GRUPO_BASES26.Localidad  (localidad_provincia);
-
--- Aerolíneas y aeropuertos
 CREATE INDEX ix_aerolinea_pais       ON GRUPO_BASES26.Aerolinea  (aerolinea_pais);
 CREATE INDEX ix_aerolinea_alianza    ON GRUPO_BASES26.Aerolinea  (aerolinea_alianza);
 CREATE INDEX ix_aeropuerto_ciudad    ON GRUPO_BASES26.Aeropuerto (aeropuerto_ciudad);
-
--- Hospedaje
 CREATE INDEX ix_hospedaje_ciudad     ON GRUPO_BASES26.Hospedaje  (hospedaje_ciudad);
 CREATE INDEX ix_hospedaje_pais       ON GRUPO_BASES26.Hospedaje  (hospedaje_pais);
 CREATE INDEX ix_habitacion_hospedaje ON GRUPO_BASES26.Habitacion (habitacion_hospedaje);
-
--- Excursion
 CREATE INDEX ix_excursion_proveedor  ON GRUPO_BASES26.Excursion  (excursion_proveedor);
-
--- Vuelo
 CREATE INDEX ix_vuelo_aerolinea      ON GRUPO_BASES26.Vuelo (vuelo_aerolinea);
 CREATE INDEX ix_vuelo_apto_salida    ON GRUPO_BASES26.Vuelo (vuelo_apto_salida);
 CREATE INDEX ix_vuelo_apto_llegada   ON GRUPO_BASES26.Vuelo (vuelo_apto_llegada);
 CREATE INDEX ix_vuelo_fecha_salida   ON GRUPO_BASES26.Vuelo (vuelo_fecha_salida);
-
--- Agencia y agentes
 CREATE INDEX ix_agencia_localidad    ON GRUPO_BASES26.Agencia (agencia_localidad);
 CREATE INDEX ix_agente_agencia       ON GRUPO_BASES26.Agente  (agente_agencia);
 CREATE INDEX ix_agente_localidad     ON GRUPO_BASES26.Agente  (agente_localidad);
 CREATE INDEX ix_agente_fecha_nac     ON GRUPO_BASES26.Agente  (agente_fecha_nac);
-
--- Cliente
 CREATE INDEX ix_cliente_localidad    ON GRUPO_BASES26.Cliente (cliente_localidad);
 CREATE INDEX ix_cliente_dni          ON GRUPO_BASES26.Cliente (cliente_dni);
 CREATE INDEX ix_cliente_fecha_nac    ON GRUPO_BASES26.Cliente (cliente_fecha_nac);
-
--- Solicitud de cotización
 CREATE INDEX ix_solicitud_cliente    ON GRUPO_BASES26.SolicitudCotizacion (solicitud_cliente);
 CREATE INDEX ix_solicitud_agente     ON GRUPO_BASES26.SolicitudCotizacion (solicitud_agente);
 CREATE INDEX ix_solicitud_fecha      ON GRUPO_BASES26.SolicitudCotizacion (solicitud_fecha);
 CREATE INDEX ix_det_ciudad_ciudad    ON GRUPO_BASES26.DetalleCiudad       (det_ciudad_ciudad);
 CREATE INDEX ix_det_ciudad_solicitud ON GRUPO_BASES26.DetalleCiudad       (det_ciudad_solicitud);
-
--- Propuesta
 CREATE INDEX ix_propuesta_solicitud      ON GRUPO_BASES26.Propuesta                 (propuesta_solicitud);
 CREATE INDEX ix_propuesta_agente         ON GRUPO_BASES26.Propuesta                 (propuesta_agente);
 CREATE INDEX ix_propuesta_estado         ON GRUPO_BASES26.Propuesta                 (propuesta_estado);
@@ -530,8 +513,6 @@ CREATE INDEX ix_det_prop_vuelo_propuesta ON GRUPO_BASES26.DetallePropuestaVuelo 
 CREATE INDEX ix_det_prop_hosp_propuesta  ON GRUPO_BASES26.DetallePropuestaHospedaje (det_prop_hosp_propuesta);
 CREATE INDEX ix_det_prop_hosp_habitacion ON GRUPO_BASES26.DetallePropuestaHospedaje (det_prop_hosp_habitacion);
 CREATE INDEX ix_det_prop_hosp_hospedaje  ON GRUPO_BASES26.DetallePropuestaHospedaje (det_prop_hosp_hospedaje);
-
--- Venta
 CREATE INDEX ix_venta_agencia           ON GRUPO_BASES26.Venta                   (venta_agencia);
 CREATE INDEX ix_venta_cliente           ON GRUPO_BASES26.Venta                   (venta_cliente);
 CREATE INDEX ix_venta_agente            ON GRUPO_BASES26.Venta                   (venta_agente);
@@ -542,8 +523,6 @@ CREATE INDEX ix_det_vta_vuelo_vuelo     ON GRUPO_BASES26.Detalle_Venta_Vuelo    
 CREATE INDEX ix_det_vta_hosp_habitacion ON GRUPO_BASES26.Detalle_Venta_Hospedaje (det_vta_hosp_habitacion);
 CREATE INDEX ix_det_vta_hosp_hospedaje  ON GRUPO_BASES26.Detalle_Venta_Hospedaje (det_vta_hosp_hospedaje);
 CREATE INDEX ix_det_vta_excur_venta     ON GRUPO_BASES26.Detalle_Venta_Excursion (det_vta_excur_venta);
-
--- Encuesta
 CREATE INDEX ix_encuesta_cliente     ON GRUPO_BASES26.Encuesta                (encuesta_cliente);
 CREATE INDEX ix_encuesta_agente      ON GRUPO_BASES26.Encuesta                (encuesta_agente);
 CREATE INDEX ix_encuesta_venta       ON GRUPO_BASES26.Encuesta                (encuesta_venta);
@@ -552,10 +531,10 @@ CREATE INDEX ix_encuesta_fecha       ON GRUPO_BASES26.Encuesta                (e
 CREATE INDEX ix_calificacion_aspecto ON GRUPO_BASES26.CalificacionPorEncuesta (calificacion_aspecto);
 GO
 --==================================================
--- Migracion - Stored Procedures
+-- Migracion
 --==================================================
 
--- NIVEL 1: Tablas sin dependencias
+-- Tablas sin dependencias
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_Pais(@salida int OUTPUT)
 AS
@@ -704,7 +683,7 @@ BEGIN
 END
 GO
 
--- NIVEL 2: Ciudad (->Pais), Localidad (->Provincia)
+--
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_Ciudad(@salida int OUTPUT)
 AS
@@ -766,7 +745,7 @@ BEGIN
 END
 GO
 
--- NIVEL 3: Agencia (->Localidad), Aerolinea (->Pais,Alianza), Aeropuerto (->Ciudad), Hospedaje (->Ciudad,Pais)
+-- 
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_Agencia(@salida int OUTPUT)
 AS
@@ -860,7 +839,7 @@ BEGIN
 END
 GO
 
--- NIVEL 4: Agente, Cliente, Habitacion, Excursion, Vuelo
+-- 
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_Agente(@salida int OUTPUT)
 AS
@@ -982,8 +961,7 @@ BEGIN
 END
 GO
 
--- NIVEL 5: SolicitudCotizacion (->Cliente,Agente), Venta (->Agencia,Cliente,Agente,CanalVenta,MedioPago)
-
+-- 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_SolicitudCotizacion(@salida int OUTPUT)
 AS
 BEGIN
@@ -1042,7 +1020,7 @@ BEGIN
 END
 GO
 
--- NIVEL 6: DetalleCiudad (->Ciudad,SolicitudCotizacion), Propuesta (->SolicitudCotizacion,Agente,Estado)
+-- 
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_DetalleCiudad(@salida int OUTPUT)
 AS
@@ -1091,8 +1069,7 @@ BEGIN
 END
 GO
 
--- NIVEL 7: Detalles de Propuesta y Venta
-
+-- 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_DetallePropuestaVuelo(@salida int OUTPUT)
 AS
 BEGIN
@@ -1265,7 +1242,7 @@ BEGIN
 END
 GO
 
--- NIVEL 8: Encuesta (->Cliente,Agente,Venta,Propuesta)
+-- 
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_Encuesta(@salida int OUTPUT)
 AS
@@ -1292,7 +1269,7 @@ BEGIN
 END
 GO
 
--- NIVEL 9: CalificacionPorEncuesta (->Encuesta,Aspecto)
+-- 
 
 CREATE PROCEDURE GRUPO_BASES26.Migrar_CalificacionPorEncuesta(@salida int OUTPUT)
 AS
@@ -1315,7 +1292,7 @@ END
 GO
 
 --==================================================
--- Ejecucion de migraciones en orden de dependencia
+-- Ejecucion de migraciones
 --==================================================
 
 DECLARE @resultado int
