@@ -1,7 +1,7 @@
 USE GD1C2026
 GO
 
-CREATE SCHEMA [GRUPO_BASES26]
+CREATE SCHEMA [GRUPO_BASES26a]
     GO
 
 ----------------------------
@@ -649,27 +649,37 @@ GO
 
 ---------------------------------
 -- ciudad
-
+CREATE PROCEDURE GRUPO_BASES26.Migrar_Ciudad
+AS
+BEGIN
 CREATE TABLE #TempCiudadPais (
                                  Ciudad_Nombre nvarchar(255),
                                  Pais_Nombre nvarchar(255)
 );
 INSERT INTO #TempCiudadPais (Ciudad_Nombre, Pais_Nombre)
-SELECT DISTINCT Aeropuerto_Llegada_Ciudad, Aeropuerto_Llegada_Pais
+SELECT Aeropuerto_Llegada_Ciudad, Aeropuerto_Llegada_Pais
 FROM gd_esquema.Maestra WHERE Aeropuerto_Llegada_Ciudad is not null AND Aeropuerto_Llegada_Pais is not null
 UNION
-SELECT DISTINCT Aeropuerto_Salida_Ciudad, Aeropuerto_Salida_Pais
+SELECT Aeropuerto_Salida_Ciudad, Aeropuerto_Salida_Pais
 FROM gd_esquema.Maestra WHERE Aeropuerto_Salida_Ciudad is not null AND Aeropuerto_Salida_Pais is not null
 UNION
-SELECT DISTINCT Hospedaje_Ciudad, Hospedaje_Pais
+SELECT Hospedaje_Ciudad, Hospedaje_Pais
 FROM gd_esquema.Maestra WHERE Hospedaje_Ciudad is not null AND Hospedaje_Pais is not null
 
-    INSERT INTO GRUPO_BASES26.Ciudad (ciudad_pais, ciudad_nombre)
-SELECT DISTINCT P.pais_id, T.Ciudad_Nombre
-FROM #TempCiudadPais T
-         INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.pais_nombre;
-
-DROP TABLE #TempCiudadPais;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+            INSERT INTO GRUPO_BASES26.Ciudad (ciudad_pais, ciudad_nombre)
+                SELECT DISTINCT P.pais_id, T.Ciudad_Nombre
+                FROM #TempCiudadPais T
+                INNER JOIN GRUPO_BASES26.Pais P ON T.Pais_Nombre = P.pais_nombre;
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+    END CATCH
+    DROP TABLE #TempCiudadPais;
+END
+GO
 
 ---------------------------------------
 -- Canal de venta
@@ -906,7 +916,7 @@ BEGIN
     END CATCH
 END
 GO
---EXEC GRUPO_BASES26.Migrar_Cliente 14
+-- 14
 -------------------------------------------
 -- Vuelo
 CREATE PROCEDURE GRUPO_BASES26.Migrar_Vuelo
@@ -1134,7 +1144,7 @@ BEGIN
     END CATCH
 END
 GO
---EXEC GRUPO_BASES26.Migrar_VentaPropuesta 24
+--
 
 -------------------------------------------
 -- Detalle_Venta_Vuelo
@@ -1161,7 +1171,7 @@ BEGIN
     END CATCH
 END
 GO
---EXEC GRUPO_BASES26.Migrar_DetalleVentaVuelo 27
+--
 
 -------------------------------------------
 -- Detalle_Venta_Hospedaje
@@ -1264,3 +1274,40 @@ BEGIN
 END
 GO
 --EXEC GRUPO_BASES26.Migrar_CalificacionEncuesta 31
+
+EXEC GRUPO_BASES26.Migrar_Pais  ;
+EXEC GRUPO_BASES26.Migrar_Provincia; 
+EXEC GRUPO_BASES26.Migrar_Alianza;
+EXEC GRUPO_BASES26.Migrar_Estado ;
+EXEC GRUPO_BASES26.Migrar_CanalVenta ;
+EXEC GRUPO_BASES26.Migrar_MedioDePago; 
+EXEC GRUPO_BASES26.Migrar_Aspecto ;
+EXEC GRUPO_BASES26.Migrar_Proveedor;
+
+EXEC GRUPO_BASES26.Migrar_Ciudad;
+EXEC GRUPO_BASES26.Migrar_Localidad ;
+EXEC GRUPO_BASES26.Migrar_Aerolinea ;
+EXEC GRUPO_BASES26.Migrar_Aeropuerto ;
+EXEC GRUPO_BASES26.Migrar_Agencia ;
+EXEC GRUPO_BASES26.Migrar_Cliente ;
+
+EXEC GRUPO_BASES26.Migrar_Hospedaje ;
+EXEC GRUPO_BASES26.Migrar_Excursion ;
+EXEC GRUPO_BASES26.Migrar_Agente ;
+EXEC GRUPO_BASES26.Migrar_Vuelo ;
+EXEC GRUPO_BASES26.Migrar_Habitacion ;
+
+EXEC GRUPO_BASES26.MigrarSolicitudCotizacion; 
+EXEC GRUPO_BASES26.MigrarVenta ;
+EXEC GRUPO_BASES26.MigrarDetalleCiudad; 
+EXEC GRUPO_BASES26.MigrarPropuesta ;
+EXEC GRUPO_BASES26.Migrar_VentaPropuesta ;
+EXEC GRUPO_BASES26.MigrarDetallePropuestaVuelo ;
+EXEC GRUPO_BASES26.Migrar_DetallePropuestaHospedaje ;
+
+EXEC GRUPO_BASES26.Migrar_DetalleVentaVuelo ;
+EXEC GRUPO_BASES26.Migrar_DetalleVentaHospedaje ;
+EXEC GRUPO_BASES26.Migrar_DetalleVentaExcursion ;
+
+EXEC GRUPO_BASES26.Migrar_Encuesta ;
+EXEC GRUPO_BASES26.Migrar_CalificacionEncuesta; 
