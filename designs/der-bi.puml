@@ -1,0 +1,120 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+' Configuración para que las líneas sean rectas
+skinparam Linetype ortho
+'https://plantuml.com/class-diagram
+
+' ===============================
+' HECHO VENTAS
+' ===============================
+
+
+entity BI_Hechos_Ventas { 
+    * tiempo_id: bigint <<FK>>
+    * canal_id: bigint <<FK>>
+    * rango_et_cli_id: bigint <<FK>>
+    * tipo_servicio_id: bigint <<FK>>
+    --
+    *impote_total : decimal(18,2)
+}
+
+' ===============================
+' HECHO Solicitud
+' ===============================
+
+
+entity BI_Hechos_Solicitud{
+    * tiempo_id : bigint <<FK>>
+    * rango_et_cli_id: bigint <<FK>>
+    * temporada_id: bigint <<FK>>
+    --
+    * dias_anticipacion : int 
+    * cantidad_solicitudes : int
+}
+
+
+
+' ===============================
+' HECHO Propuesta
+' ===============================
+
+
+entity BI_Hechos_propuesta{
+    tiempo_id: bigint <<FK>>
+    estado_propuesta_id: bigint <<FK>>
+    rango_etario_agente_id: bigint <<FK>>
+    importe: int
+}
+
+
+
+' ===============================
+' HECHO Encuesta
+' ===============================
+
+entity BI_Hechos_Encuestas{
+    tiempo_id: bigint <<FK>>
+    rango_etario_agente_id: bigint <<FK>>
+    cuatrimestre_id: bigint <<FK>>
+    mes_id: bigint <<FK>>
+    --
+    puntaje_agente : bigint
+}
+
+entity BI_Dim_Tiempo {
+    * tiempo_id: bigint <<PK>>
+    * anio: int
+    * cuatrimestre: int
+    * mes: int
+}
+
+entity BI_Dim_Canal {
+    * canal_id: bigint <<PK>>
+    --
+    canal_detalle: nvarchar(255)
+}
+
+entity BI_Dim_RangoEtarioAgente{
+    rango_etario_agente_id: bigint <<PK>>
+    --
+    rango_descripcion: nvarchar(50)    
+}
+
+entity BI_Dim_RangoEtarioCLiente{
+    rango_etario_cliente_id: bigint <<PK>>
+    --
+    rango_descripcion: nvarchar(50)    
+}
+
+entity BI_Dim_TipoServicio {
+    * tipo_servicio_id: bigint <<PK>>
+    --
+    * tipo_descripcion: nvarchar(50)
+}
+
+entity BI_Dim_RangoEtarioCliente {
+    * rango_etario_id: bigint <<PK>>
+    --
+    * rango_descripcion: nvarchar(50)
+}
+
+entity BI_Dim_Temporadas{
+    * temporada_id : bigint <<FK>>
+    --
+    * temporada_descripcion: nvarchar(50)
+}
+
+
+BI_Hechos_Ventas ||--{ BI_Dim_Tiempo
+BI_Hechos_Ventas ||--o{ BI_Dim_RangoEtarioCliente
+BI_Hechos_Ventas ||--o{ BI_Dim_Canal
+BI_Hechos_Ventas||--o{ BI_Dim_TipoServicio 
+
+
+BI_Hechos_Solicitud ||--o{ BI_Dim_Tiempo
+BI_Hechos_Solicitud ||--o{ BI_Dim_RangoEtarioCliente
+BI_Hechos_Solicitud ||--o{BI_Dim_Temporadas
+
+
+@enduml
