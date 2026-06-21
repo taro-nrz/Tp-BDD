@@ -10,13 +10,14 @@ skinparam Linetype ortho
 ' ===============================
 
 
-entity BI_Hechos_Ventas { 
+entity BI_Hechos_Ventas {
     * tiempo_id: bigint <<FK>>
     * canal_id: bigint <<FK>>
     * rango_et_cli_id: bigint <<FK>>
     * tipo_servicio_id: bigint <<FK>>
     --
-    *impote_total : decimal(18,2)
+    * importe_total : decimal(18,2)
+    * cantidad_ventas : int
 }
 
 ' ===============================
@@ -81,7 +82,7 @@ entity BI_Dim_RangoEtarioAgente{
     rango_descripcion: nvarchar(50)    
 }
 
-entity BI_Dim_RangoEtarioCLiente{
+entity BI_Dim_RangoEtarioCliente{
     rango_etario_cliente_id: bigint <<PK>>
     --
     rango_descripcion: nvarchar(50)    
@@ -93,14 +94,9 @@ entity BI_Dim_TipoServicio {
     * tipo_descripcion: nvarchar(50)
 }
 
-entity BI_Dim_RangoEtarioCliente {
-    * rango_etario_id: bigint <<PK>>
-    --
-    * rango_descripcion: nvarchar(50)
-}
 
 entity BI_Dim_Temporadas{
-    * temporada_id : bigint <<FK>>
+    * temporada_id : bigint <<PK>>
     --
     * temporada_descripcion: nvarchar(50)
 }

@@ -1345,3 +1345,4 @@ EXEC GRUPO_BASES26.Migrar_Encuesta @salida = @resultado OUTPUT; SELECT @resultad
 
 -- Nivel 9
 EXEC GRUPO_BASES26.Migrar_CalificacionPorEncuesta @salida = @resultado OUTPUT; SELECT @resultado AS 'Migrar_CalificacionPorEncuesta - Filas insertadas';
+
