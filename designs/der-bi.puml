@@ -62,11 +62,11 @@ entity BI_Hechos_Propuestas{
 
 entity BI_Hechos_Encuestas{
     tiempo_id: bigint <<FK>>
-    rango_etario_agente_id: bigint <<FK>>
-    cuatrimestre_id: bigint <<FK>>
-    mes_id: bigint <<FK>>
+    rango_et_age_id: bigint <<FK>>
+    aspecto_id: bigint <<FK>>
     --
-    puntaje_agente : bigint
+    puntaje_total: bigint
+    cantidad_valoraciones: bigint
 }
 
 entity BI_Dim_Tiempo {
@@ -114,6 +114,13 @@ entity BI_Dim_Estado_Propuesta {
     * estado_nombre: nvarchar(255)
 }
 
+entity BI_Dim_Aspecto {
+    * aspecto_id: bigint <<PK>>
+    --
+    * aspecto_descripcion: nvarchar(50)
+
+}
+
 ' ===============================
 ' RELACIONES (Hecho }o--|| Dimensión)
 ' ===============================
@@ -134,5 +141,9 @@ BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Inicio Viaje"
 BI_Hechos_Propuestas }o--|| BI_Dim_Temporadas
 BI_Hechos_Propuestas }o--|| BI_Dim_RangoEtarioAgente
 BI_Hechos_Propuestas }o--|| BI_Dim_Estado_Propuesta
+
+BI_Hechos_Encuestas }o--|| BI_Dim_Tiempo
+BI_Hechos_Encuestas }o--|| BI_Dim_RangoEtarioAgente
+BI_Hechos_Encuestas }o--|| BI_Dim_Aspecto
 
 @enduml

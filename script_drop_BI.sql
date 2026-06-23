@@ -34,6 +34,15 @@ IF OBJECT_ID('GRUPO_BASES26.BI_Vista_Desvio_Presupuesto_Promedio', 'V') IS NOT N
 DROP VIEW GRUPO_BASES26.BI_Vista_Desvio_Presupuesto_Promedio;
 GO
 
+IF OBJECT_ID('GRUPO_BASES26.BI_Vista_Ranking_Aspectos', 'V') IS NOT NULL
+    DROP VIEW GRUPO_BASES26.BI_Vista_Ranking_Aspectos;
+GO
+
+IF OBJECT_ID('GRUPO_BASES26.BI_Vista_Satisfaccion_Agente', 'V') IS NOT NULL
+    DROP VIEW GRUPO_BASES26.BI_Vista_Satisfaccion_Agente;
+GO
+
+
 -- 2. Eliminar tabla de hechos (tiene FKs a las dimensiones)
 IF OBJECT_ID('GRUPO_BASES26.BI_Hechos_Ventas', 'U') IS NOT NULL
     DROP TABLE GRUPO_BASES26.BI_Hechos_Ventas;
@@ -45,6 +54,10 @@ GO
 
 IF OBJECT_ID('GRUPO_BASES26.BI_Hechos_Propuestas', 'U') IS NOT NULL
 DROP TABLE GRUPO_BASES26.BI_Hechos_Propuestas;
+GO
+
+IF OBJECT_ID('GRUPO_BASES26.BI_Hechos_Encuestas', 'U') IS NOT NULL
+    DROP TABLE GRUPO_BASES26.BI_Hechos_Encuestas;
 GO
 
 -- 3. Eliminar tablas dimensionales
@@ -74,4 +87,12 @@ GO
 
 IF OBJECT_ID('GRUPO_BASES26.BI_Dim_RangoEtarioAgente', 'U') IS NOT NULL
 DROP TABLE GRUPO_BASES26.BI_Dim_RangoEtarioAgente;
+GO
+
+IF OBJECT_ID('GRUPO_BASES26.BI_Dim_RangoEtarioAgente', 'U') IS NOT NULL
+DROP TABLE GRUPO_BASES26.BI_Dim_RangoEtarioAgente;
+GO
+
+IF OBJECT_ID('GRUPO_BASES26.BI_Dim_Aspecto', 'U') IS NOT NULL
+    DROP TABLE GRUPO_BASES26.BI_Dim_Aspecto;
 GO

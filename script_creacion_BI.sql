@@ -358,7 +358,9 @@ FROM GRUPO_BASES26.BI_Hechos_Solicitud H
 GROUP BY T.anio,
     TMP.temporada_descripcion,
     RC.rango_descripcion
-GO -- Vista 4: Anticipación promedio de solicitudes
+GO 
+
+-- Vista 4: Anticipación promedio de solicitudes
     -- Promedio de días de anticipación (solicitud_fecha → solicitud_fecha_inicio),
     -- segmentado por rango etario del cliente y cuatrimestre
 CREATE VIEW GRUPO_BASES26.BI_Vista_Anticipacion_Promedio_Solicitudes AS
@@ -374,14 +376,14 @@ GROUP BY T.anio,
     RC.rango_descripcion
 GO
 
-SELECT COUNT(*) FROM GRUPO_BASES26.BI_Hechos_Solicitud;
-SELECT COUNT(*) FROM GRUPO_BASES26.SolicitudCotizacion;
-SELECT DISTINCT YEAR(solicitud_fecha), MONTH(solicitud_fecha)
-FROM GRUPO_BASES26.SolicitudCotizacion;
-SELECT * FROM GRUPO_BASES26.BI_Dim_Temporadas;
+-- SELECT COUNT(*) FROM GRUPO_BASES26.BI_Hechos_Solicitud;
+-- SELECT COUNT(*) FROM GRUPO_BASES26.SolicitudCotizacion;
+-- SELECT DISTINCT YEAR(solicitud_fecha), MONTH(solicitud_fecha)
+-- FROM GRUPO_BASES26.SolicitudCotizacion;
+-- SELECT * FROM GRUPO_BASES26.BI_Dim_Temporadas;
 
-SELECT * FROM  GRUPO_BASES26.BI_Vista_Ranking_Solicitudes_Temporada 
-SELECT * FROM GRUPO_BASES26.BI_Vista_Anticipacion_Promedio_Solicitudes
+-- SELECT * FROM  GRUPO_BASES26.BI_Vista_Ranking_Solicitudes_Temporada 
+-- SELECT * FROM GRUPO_BASES26.BI_Vista_Anticipacion_Promedio_Solicitudes
 
 -- ============================================================
 -- DIMENSIÓN: ESTADO DE PROPUESTA
@@ -616,9 +618,136 @@ FROM GRUPO_BASES26.BI_Hechos_Propuestas H
 GROUP BY T.anio, T.cuatrimestre
 GO
 
--- para probar
---SELECT * FROM GRUPO_BASES26.BI_Vista_Tasa_Aceptacion_Propuestas
---SELECT * FROM GRUPO_BASES26.BI_Vista_Cotizacion_Promedio_Temporada
---SELECT * FROM GRUPO_BASES26.BI_Vista_Tiempo_Respuesta_Promedio
---SELECT * FROM GRUPO_BASES26.BI_Vista_Desvio_Presupuesto_Promedio
---GO
+-- ============================================================
+-- DIMENSIÓN: ASPECTOS 
+-- ============================================================
+CREATE TABLE GRUPO_BASES26.BI_Dim_Aspecto (
+    aspecto_id bigint IDENTITY(1,1) NOT NULL,
+    aspecto_descripcion nvarchar(255) NOT NULL
+)
+GO
+
+ALTER TABLE GRUPO_BASES26.BI_Dim_Aspecto
+ADD CONSTRAINT pk_bi_dim_aspecto PRIMARY KEY (aspecto_id)
+GO
+
+-- ============================================================
+-- TABLA DE HECHOS: ENCUESTAS
+-- ============================================================
+CREATE TABLE GRUPO_BASES26.BI_Hechos_Encuestas (
+    tiempo_id bigint NOT NULL,
+    rango_et_age_id bigint NOT NULL,
+    aspecto_id bigint NOT NULL,
+    puntaje_total bigint NOT NULL,
+    cantidad_valoraciones int NOT NULL
+)
+GO
+
+ALTER TABLE GRUPO_BASES26.BI_Hechos_Encuestas
+ADD CONSTRAINT pk_bi_hechos_encuestas 
+PRIMARY KEY (tiempo_id, rango_et_age_id, aspecto_id)
+GO
+
+ALTER TABLE GRUPO_BASES26.BI_Hechos_Encuestas ADD CONSTRAINT fk_bi_he_tiempo FOREIGN KEY (tiempo_id) REFERENCES GRUPO_BASES26.BI_Dim_Tiempo (tiempo_id)
+GO
+ALTER TABLE GRUPO_BASES26.BI_Hechos_Encuestas ADD CONSTRAINT fk_bi_he_rango_age FOREIGN KEY (rango_et_age_id) REFERENCES GRUPO_BASES26.BI_Dim_RangoEtarioAgente (rango_etario_agente_id)
+GO
+ALTER TABLE GRUPO_BASES26.BI_Hechos_Encuestas ADD CONSTRAINT fk_bi_he_aspecto FOREIGN KEY (aspecto_id) REFERENCES GRUPO_BASES26.BI_Dim_Aspecto (aspecto_id)
+GO
+
+-- Índices de Encuestas
+CREATE INDEX ix_bi_he_tiempo ON GRUPO_BASES26.BI_Hechos_Encuestas (tiempo_id)
+GO
+CREATE INDEX ix_bi_he_rango ON GRUPO_BASES26.BI_Hechos_Encuestas (rango_et_age_id)
+GO
+CREATE INDEX ix_bi_he_aspecto ON GRUPO_BASES26.BI_Hechos_Encuestas (aspecto_id)
+GO
+
+
+-- ============================================================
+-- CARGA DE DIMENSIONES: ENCUESTAS
+-- ============================================================
+
+-- Carga de BI_Dim_Aspecto
+INSERT INTO GRUPO_BASES26.BI_Dim_Aspecto (aspecto_descripcion)
+SELECT aspecto_descripcion FROM GRUPO_BASES26.Aspecto
+GO
+
+-- Por si alguna encuesta fue completada en un mes donde no hubo ventas
+INSERT INTO GRUPO_BASES26.BI_Dim_Tiempo (anio, cuatrimestre, mes)
+SELECT DISTINCT YEAR(E.encuesta_fecha),
+    CASE 
+        WHEN MONTH(E.encuesta_fecha) BETWEEN 1 AND 4 THEN 1
+        WHEN MONTH(E.encuesta_fecha) BETWEEN 5 AND 8 THEN 2
+        ELSE 3 
+    END,
+    MONTH(E.encuesta_fecha)
+FROM GRUPO_BASES26.Encuesta E
+WHERE NOT EXISTS (
+    SELECT 1 FROM GRUPO_BASES26.BI_Dim_Tiempo T2 
+    WHERE T2.anio = YEAR(E.encuesta_fecha) AND T2.mes = MONTH(E.encuesta_fecha)
+)
+GO
+
+-- ============================================================
+-- CARGA DEL HECHO ENCUESTAS
+-- ============================================================
+INSERT INTO GRUPO_BASES26.BI_Hechos_Encuestas (
+    tiempo_id,
+    rango_et_age_id,
+    aspecto_id,
+    puntaje_total,
+    cantidad_valoraciones
+)
+SELECT 
+    T.tiempo_id,
+    RA.rango_etario_agente_id,
+    DA.aspecto_id,
+    SUM(CE.calificacion_valor),
+    COUNT(CE.calificacion_encuesta)
+FROM GRUPO_BASES26.Encuesta E
+    INNER JOIN GRUPO_BASES26.CalificacionPorEncuesta CE ON CE.calificacion_encuesta = E.encuesta_id
+    INNER JOIN GRUPO_BASES26.Aspecto A ON A.aspecto_id = CE.calificacion_aspecto
+    INNER JOIN GRUPO_BASES26.Agente AG ON AG.agente_legajo = E.encuesta_agente
+    INNER JOIN GRUPO_BASES26.BI_Dim_Aspecto DA ON DA.aspecto_descripcion = A.aspecto_descripcion
+    INNER JOIN GRUPO_BASES26.BI_Dim_Tiempo T ON T.anio = YEAR(E.encuesta_fecha) AND T.mes = MONTH(E.encuesta_fecha)
+    INNER JOIN GRUPO_BASES26.BI_Dim_RangoEtarioAgente RA ON RA.rango_descripcion = CASE
+        WHEN DATEDIFF(YEAR, AG.agente_fecha_nac, E.encuesta_fecha) < 25 THEN 'Menores de 25 años'
+        WHEN DATEDIFF(YEAR, AG.agente_fecha_nac, E.encuesta_fecha) BETWEEN 25 AND 35 THEN 'Entre 25 y 35 años'
+        WHEN DATEDIFF(YEAR, AG.agente_fecha_nac, E.encuesta_fecha) BETWEEN 36 AND 50 THEN 'Entre 35 y 50 años'
+        ELSE 'Mayores de 50 años'
+    END
+GROUP BY 
+    T.tiempo_id,
+    RA.rango_etario_agente_id,
+    DA.aspecto_id
+GO
+
+-- ============================================================
+-- VISTAS DE NEGOCIO - ENCUESTAS
+-- ============================================================
+
+-- Vista 9: Ranking de aspectos mejor y peor valorados (Promedio por aspecto y cuatrimestre)
+CREATE VIEW GRUPO_BASES26.BI_Vista_Ranking_Aspectos AS
+SELECT 
+    T.anio AS ANIO,
+    T.cuatrimestre AS CUATRIMESTRE,
+    A.aspecto_descripcion AS ASPECTO,
+    CAST(CAST(SUM(H.puntaje_total) AS DECIMAL(18,2)) / NULLIF(SUM(H.cantidad_valoraciones), 0) AS DECIMAL(18,2)) AS PROMEDIO_PUNTAJE
+FROM GRUPO_BASES26.BI_Hechos_Encuestas H
+    INNER JOIN GRUPO_BASES26.BI_Dim_Tiempo T ON T.tiempo_id = H.tiempo_id
+    INNER JOIN GRUPO_BASES26.BI_Dim_Aspecto A ON A.aspecto_id = H.aspecto_id
+GROUP BY T.anio, T.cuatrimestre, A.aspecto_descripcion
+GO
+-- Vista 10: Satisfacción promedio por agente (Por rango etario del agente y mes)
+CREATE VIEW GRUPO_BASES26.BI_Vista_Satisfaccion_Agente AS
+SELECT 
+    T.anio AS ANIO,
+    T.mes AS MES,
+    RA.rango_descripcion AS RANGO_ETARIO_AGENTE,
+    CAST(CAST(SUM(H.puntaje_total) AS DECIMAL(18,2)) / NULLIF(SUM(H.cantidad_valoraciones), 0) AS DECIMAL(18,2)) AS SATISFACCION_PROMEDIO
+FROM GRUPO_BASES26.BI_Hechos_Encuestas H
+    INNER JOIN GRUPO_BASES26.BI_Dim_Tiempo T ON T.tiempo_id = H.tiempo_id
+    INNER JOIN GRUPO_BASES26.BI_Dim_RangoEtarioAgente RA ON RA.rango_etario_agente_id = H.rango_et_age_id
+GROUP BY T.anio, T.mes, RA.rango_descripcion
+GO
