@@ -41,13 +41,19 @@ entity BI_Hechos_Solicitud{
 ' ===============================
 
 
-entity BI_Hechos_propuesta{
-    tiempo_id: bigint <<FK>>
-    estado_propuesta_id: bigint <<FK>>
-    rango_etario_agente_id: bigint <<FK>>
-    importe: int
+entity BI_Hechos_Propuestas{
+    * tiempo_emision_id: bigint <<FK>>
+    * tiempo_solicitud_id: bigint <<FK>>
+    * tiempo_inicio_viaje_id: bigint <<FK>>
+    * temporada_id: bigint <<FK>>
+    * rango_etario_agente_id: bigint <<FK>>
+    * estado_propuesta_id: bigint <<FK>>
+    --
+    * importe_total : decimal(18,2)
+    * presupuesto_estimado : decimal(18,2)
+    * dias_respuesta : int
+    * cantidad_propuestas : int
 }
-
 
 
 ' ===============================
@@ -102,6 +108,16 @@ entity BI_Dim_Temporadas{
 }
 
 
+entity BI_Dim_Estado_Propuesta {
+    * estado_id: bigint <<PK>>
+    --
+    * estado_nombre: nvarchar(255)
+}
+
+' ===============================
+' RELACIONES (Hecho }o--|| Dimensión)
+' ===============================
+
 BI_Hechos_Ventas ||--{ BI_Dim_Tiempo
 BI_Hechos_Ventas ||--o{ BI_Dim_RangoEtarioCliente
 BI_Hechos_Ventas ||--o{ BI_Dim_Canal
@@ -112,5 +128,11 @@ BI_Hechos_Solicitud ||--o{ BI_Dim_Tiempo
 BI_Hechos_Solicitud ||--o{ BI_Dim_RangoEtarioCliente
 BI_Hechos_Solicitud ||--o{BI_Dim_Temporadas
 
+BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Emisión"
+BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Solicitud"
+BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Inicio Viaje"
+BI_Hechos_Propuestas }o--|| BI_Dim_Temporadas
+BI_Hechos_Propuestas }o--|| BI_Dim_RangoEtarioAgente
+BI_Hechos_Propuestas }o--|| BI_Dim_Estado_Propuesta
 
 @enduml
