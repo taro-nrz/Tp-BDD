@@ -244,7 +244,7 @@ CREATE TABLE GRUPO_BASES26.SolicitudCotizacion (
 	solicitud_fecha_fin date NOT NULL,
 	solicitud_cant_pax int NOT NULL,
 	solicitud_observaciones nvarchar(max) NULL,
-	solicitud_presupuesto decimal(18, 2) NOT NULL
+	solicitud_presupuesto decimal(18, 2) NULL
 )
 ALTER TABLE GRUPO_BASES26.SolicitudCotizacion
 	ADD CONSTRAINT pk_solicitudcotizacion PRIMARY KEY (solicitud_id);

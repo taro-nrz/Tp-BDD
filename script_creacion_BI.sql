@@ -276,13 +276,13 @@ GO
 -- CARGA DIMENSION TEMPORADAS
 -- ============================================================
 INSERT INTO GRUPO_BASES26.BI_Dim_Temporadas (temporada_descripcion)
-VALUES ('Verano') -- Dic, Ene, Feb
+VALUES ('Verano') -- Ene, Feb, Mar
 INSERT INTO GRUPO_BASES26.BI_Dim_Temporadas (temporada_descripcion)
-VALUES ('Otonio') -- Mar, Abr, May
+VALUES ('Otoño') -- Abr, May, Jun
 INSERT INTO GRUPO_BASES26.BI_Dim_Temporadas (temporada_descripcion)
-VALUES ('Invierno') -- Jun, Jul, Ago
+VALUES ('Invierno') -- Jul, Ago, Sep
 INSERT INTO GRUPO_BASES26.BI_Dim_Temporadas (temporada_descripcion)
-VALUES ('Primavera') -- Sep, Oct, Nov
+VALUES ('Primavera') -- Oct, Nov, Dic
 GO 
 -- ============================================================
 -- CARGA DIMENSION TIEMPO (complemento con meses de Solicitud)
@@ -333,7 +333,7 @@ FROM GRUPO_BASES26.SolicitudCotizacion S
     END
 INNER JOIN GRUPO_BASES26.BI_Dim_Temporadas TMP ON TMP.temporada_descripcion = CASE
         WHEN MONTH(S.solicitud_fecha_inicio) BETWEEN 1 and 3 then 'Verano'
-        WHEN MONTH(S.solicitud_fecha_inicio) BETWEEN  4 and 6 THEN 'Otonio'
+        WHEN MONTH(S.solicitud_fecha_inicio) BETWEEN  4 and 6 THEN 'Otoño'
         WHEN MONTH(S.solicitud_fecha_inicio) BETWEEN 7 and 9 THEN 'Invierno'
         ELSE 'Primavera'
     END
@@ -422,7 +422,7 @@ CREATE TABLE GRUPO_BASES26.BI_Hechos_Propuestas (
     rango_et_age_id bigint NOT NULL,
     estado_propuesta_id bigint NOT NULL,
     importe_total decimal(18,2) NOT NULL,
-    presupuesto_estimado decimal(18,2) NOT NULL,
+    presupuesto_estimado decimal(18,2) NULL,
     dias_respuesta int NOT NULL,
     cantidad_propuestas int NOT NULL
 )
@@ -547,7 +547,7 @@ FROM GRUPO_BASES26.Propuesta P
     INNER JOIN GRUPO_BASES26.BI_Dim_Tiempo T_INI ON T_INI.anio = YEAR(P.propuesta_fecha_desde) AND T_INI.mes = MONTH(P.propuesta_fecha_desde)
     INNER JOIN GRUPO_BASES26.BI_Dim_Temporadas TMP ON TMP.temporada_descripcion = CASE
     WHEN MONTH(P.propuesta_fecha_desde) BETWEEN 1 and 3 then 'Verano'
-    WHEN MONTH(P.propuesta_fecha_desde) BETWEEN 4 and 6 THEN 'Otonio'
+    WHEN MONTH(P.propuesta_fecha_desde) BETWEEN 4 and 6 THEN 'Otoño'
     WHEN MONTH(P.propuesta_fecha_desde) BETWEEN 7 and 9 THEN 'Invierno'
     ELSE 'Primavera'
 END
