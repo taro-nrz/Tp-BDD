@@ -135,9 +135,9 @@ BI_Hechos_Solicitud ||--o{ BI_Dim_Tiempo
 BI_Hechos_Solicitud ||--o{ BI_Dim_RangoEtarioCliente
 BI_Hechos_Solicitud ||--o{BI_Dim_Temporadas
 
-BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Emisión"
-BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Solicitud"
-BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo : "Inicio Viaje"
+BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo
+BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo
+BI_Hechos_Propuestas }o--|| BI_Dim_Tiempo
 BI_Hechos_Propuestas }o--|| BI_Dim_Temporadas
 BI_Hechos_Propuestas }o--|| BI_Dim_RangoEtarioAgente
 BI_Hechos_Propuestas }o--|| BI_Dim_Estado_Propuesta
