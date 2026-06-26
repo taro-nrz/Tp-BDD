@@ -471,8 +471,6 @@ SELECT estado_nombre FROM GRUPO_BASES26.Estado
     GO
 
 -- Carga de BI_Dim_RangoEtarioAgente
-INSERT INTO GRUPO_BASES26.BI_Dim_RangoEtarioAgente (rango_descripcion) VALUES ('Menores de 25 años')
-GO
 INSERT INTO GRUPO_BASES26.BI_Dim_RangoEtarioAgente (rango_descripcion) VALUES ('Entre 25 y 35 años')
 GO
 INSERT INTO GRUPO_BASES26.BI_Dim_RangoEtarioAgente (rango_descripcion) VALUES ('Entre 35 y 50 años')
@@ -552,7 +550,6 @@ FROM GRUPO_BASES26.Propuesta P
     ELSE 'Primavera'
 END
 INNER JOIN GRUPO_BASES26.BI_Dim_RangoEtarioAgente RA ON RA.rango_descripcion = CASE
-    WHEN DATEDIFF(YEAR, A.agente_fecha_nac, P.propuesta_fecha_emision) < 25 THEN 'Menores de 25 años'
     WHEN DATEDIFF(YEAR, A.agente_fecha_nac, P.propuesta_fecha_emision) BETWEEN 25 AND 35 THEN 'Entre 25 y 35 años'
     WHEN DATEDIFF(YEAR, A.agente_fecha_nac, P.propuesta_fecha_emision) BETWEEN 36 AND 50 THEN 'Entre 35 y 50 años'
     ELSE 'Mayores de 50 años'
@@ -712,7 +709,6 @@ FROM GRUPO_BASES26.Encuesta E
     INNER JOIN GRUPO_BASES26.BI_Dim_Aspecto DA ON DA.aspecto_descripcion = A.aspecto_descripcion
     INNER JOIN GRUPO_BASES26.BI_Dim_Tiempo T ON T.anio = YEAR(E.encuesta_fecha) AND T.mes = MONTH(E.encuesta_fecha)
     INNER JOIN GRUPO_BASES26.BI_Dim_RangoEtarioAgente RA ON RA.rango_descripcion = CASE
-        WHEN DATEDIFF(YEAR, AG.agente_fecha_nac, E.encuesta_fecha) < 25 THEN 'Menores de 25 años'
         WHEN DATEDIFF(YEAR, AG.agente_fecha_nac, E.encuesta_fecha) BETWEEN 25 AND 35 THEN 'Entre 25 y 35 años'
         WHEN DATEDIFF(YEAR, AG.agente_fecha_nac, E.encuesta_fecha) BETWEEN 36 AND 50 THEN 'Entre 35 y 50 años'
         ELSE 'Mayores de 50 años'
